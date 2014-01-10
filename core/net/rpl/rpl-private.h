@@ -158,7 +158,7 @@
 #endif
 
 /* Expire DAOs from neighbors that do not respond in this time. (seconds) */
-#define DAO_EXPIRATION_TIMEOUT          60
+#define DAO_EXPIRATION_TIMEOUT          2
 /*---------------------------------------------------------------------------*/
 #define RPL_INSTANCE_LOCAL_FLAG         0x80
 #define RPL_INSTANCE_D_FLAG             0x40

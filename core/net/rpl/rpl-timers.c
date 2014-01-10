@@ -58,6 +58,8 @@ static void handle_dio_timer(void *ptr);
 
 static uint16_t next_dis;
 
+static uip_ipaddr_t *mobile_dio_addr;
+
 /* dio_send_ok is true if the node is ready to send DIOs */
 static uint8_t dio_send_ok;
 
@@ -73,20 +75,33 @@ handle_periodic_timer(void *ptr)
   next_dis++;
   if(rpl_get_any_dag() == NULL && next_dis >= RPL_DIS_INTERVAL) {
     next_dis = 0;
-    dis_output(NULL);
+    dis_output(NULL,0,0);
   }
 #endif
   ctimer_reset(&periodic_timer);
 }
-/*---------------------------------------------------------------------------*/
-static void
-new_dio_interval(rpl_instance_t *instance)
+/************************************************************************/
+void
+new_dio_interval(rpl_instance_t *instance, uip_ipaddr_t *dio_addr, uint8_t flag, char priority)
 {
-  uint32_t time;
+  uint32_t time, time2;
   clock_time_t ticks;
 
-  /* TODO: too small timer intervals for many cases */
-  time = 1UL << instance->dio_intcurrent;
+  if(flag==2){
+    mobile_dio_addr=dio_addr;
+    instance->dio_reset_flag=1;
+    /*
+     * When mobility is being performed, DIOs need to be sent randomly so that there's no conflict.
+     * The delay depends on the priority given to them according to the rssi reading.
+     * Trickle will not be affected.
+     */
+      time2 = (priority * CLOCK_SECOND) / 30;
+      /*dio_output(instance, mobile_dio_addr, 2);*/
+      PRINTF("RPL: Scheduling DIO timer %lu ticks in future\n", time2);
+      ctimer_set(&instance->dio_timer, time2, &handle_dio_timer, instance);
+  }else{
+        /* TODO: too small timer intervals for many cases */
+        time = 1UL << instance->dio_intcurrent;
 
   /* Convert from milliseconds to CLOCK_TICKS. */
   ticks = (time * CLOCK_SECOND) / 1000;
@@ -132,6 +147,12 @@ handle_dio_timer(void *ptr)
   instance = (rpl_instance_t *)ptr;
 
   PRINTF("RPL: DIO Timer triggered\n");
+  if(instance->dio_reset_flag==1){
+    dio_output(instance, mobile_dio_addr, 2);
+    instance->dio_reset_flag=0;
+    return;
+    }
+
   if(!dio_send_ok) {
     if(uip_ds6_get_link_local(ADDR_PREFERRED) != NULL) {
       dio_send_ok = 1;
@@ -148,7 +169,7 @@ handle_dio_timer(void *ptr)
 #if RPL_CONF_STATS
       instance->dio_totsend++;
 #endif /* RPL_CONF_STATS */
-      dio_output(instance, NULL);
+      dio_output(instance, NULL, 0);
     } else {
       PRINTF("RPL: Supressing DIO transmission (%d >= %d)\n",
              instance->dio_counter, instance->dio_redundancy);

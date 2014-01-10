@@ -876,8 +876,8 @@ dio_output(rpl_instance_t *instance, uip_ipaddr_t *uc_addr, uint8_t flags)
 #else /* RPL_LEAF_ONLY */
   /* Unicast requests get unicast replies! */
   if(uc_addr == NULL) {
-    PRINTF("RPL: Sending a multicast-DIO with rank %u\n",
-        (unsigned)instance->current_dag->rank);
+    PRINTF("RPL: Sending a multicast-DIO with rank %u and flags = %d\n",
+        (unsigned)instance->current_dag->rank,flags);
     uip_create_linklocal_rplnodes_mcast(&addr);
     uip_icmp6_send(&addr, ICMP6_RPL, RPL_CODE_DIO, pos);
   } else {

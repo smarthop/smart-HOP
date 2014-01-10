@@ -61,7 +61,6 @@ rpl_unreach()
 void
 rpl_dis_burst()
 {
-
   etimer_set(&dis_timer, SEND_TIME);
 }
 void
@@ -132,6 +131,7 @@ eventhandler(process_event_t ev, process_data_t data)
 
   case STOP_DIO_CHECK:
     {
+	  PRINTF("stoping wait_dio timer\n");
       etimer_stop(&dio_check);
     }
     break;
