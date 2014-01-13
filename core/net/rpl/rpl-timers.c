@@ -53,7 +53,7 @@
 static struct ctimer periodic_timer;
 
 static void handle_periodic_timer(void *ptr);
-static void new_dio_interval(rpl_instance_t *instance);
+
 static void handle_dio_timer(void *ptr);
 
 static uint16_t next_dis;
@@ -138,6 +138,7 @@ new_dio_interval(rpl_instance_t *instance, uip_ipaddr_t *dio_addr, uint8_t flag,
   PRINTF("RPL: Scheduling DIO timer %lu ticks in future (Interval)\n", ticks);
   ctimer_set(&instance->dio_timer, ticks, &handle_dio_timer, instance);
 }
+}
 /*---------------------------------------------------------------------------*/
 static void
 handle_dio_timer(void *ptr)
@@ -184,7 +185,7 @@ handle_dio_timer(void *ptr)
       instance->dio_intcurrent++;
       PRINTF("RPL: DIO Timer interval doubled %d\n", instance->dio_intcurrent);
     }
-    new_dio_interval(instance);
+    new_dio_interval(instance,NULL,0,0);
   }
 }
 /*---------------------------------------------------------------------------*/
@@ -198,16 +199,26 @@ rpl_reset_periodic_timer(void)
 }
 /*---------------------------------------------------------------------------*/
 /* Resets the DIO timer in the instance to its minimal interval. */
+/* The argument uint8_t flag has been added to distinguish a reset of the timer due to multicast DIS
+ * or due to the mobility process that requires a smaller DIO interval that doesn't follow Trickle
+ */
 void
 rpl_reset_dio_timer(rpl_instance_t *instance)
 {
+  /*if flag = 1, we don't want to do any check for the dio_intcurrent or dio_intmin or the DIO might not be sent*/
+  /*instance->dio_reset_flag=flag;
+  if(flag==1){
+    new_dio_interval(instance, priority);
+    return;
+  }*/
+
 #if !RPL_LEAF_ONLY
   /* Do not reset if we are already on the minimum interval,
      unless forced to do so. */
   if(instance->dio_intcurrent > instance->dio_intmin) {
     instance->dio_counter = 0;
     instance->dio_intcurrent = instance->dio_intmin;
-    new_dio_interval(instance);
+    new_dio_interval(instance,NULL,0,0);
   }
 #if RPL_CONF_STATS
   rpl_stats.resets++;

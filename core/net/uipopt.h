@@ -284,7 +284,7 @@ void uip_log(char *msg);
 
 #ifndef UIP_CONF_IPV6
 /** Do we use IPv6 or not (default: no) */
-#define UIP_CONF_IPV6                 0
+#define UIP_CONF_IPV6                 1
 #endif
 
 #ifndef UIP_CONF_IPV6_QUEUE_PKT

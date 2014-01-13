@@ -1141,7 +1141,7 @@ rpl_process_parent_event(rpl_instance_t *instance, rpl_parent_t *p)
 }
 /*---------------------------------------------------------------------------*/
 void
-rpl_process_dio(uip_ipaddr_t *from, rpl_dio_t *dio)
+rpl_process_dio(uip_ipaddr_t *from, rpl_dio_t *dio, int mobility)
 {
   rpl_instance_t *instance;
   rpl_dag_t *dag, *previous_dag;
@@ -1285,11 +1285,12 @@ rpl_process_dio(uip_ipaddr_t *from, rpl_dio_t *dio)
     return;
   }
   if(mobility==0){
+  #if RPL_DAG_MC != RPL_DAG_MC_NONE
   memcpy(&p->mc, &dio->mc, sizeof(p->mc));
-    if(rpl_process_parent_event(instance, p) == 0) {
-      PRINTF("RPL: The candidate parent is rejected\n");
-      return;
-    }
+#endif /* RPL_DAG_MC != RPL_DAG_MC_NONE */
+  if(rpl_process_parent_event(instance, p) == 0) {
+    PRINTF("RPL: The candidate parent is rejected\n");
+    return;
   }
 
   /* We don't use route control, so we can have only one official parent. */
@@ -1304,6 +1305,8 @@ rpl_process_dio(uip_ipaddr_t *from, rpl_dio_t *dio)
     uip_ds6_defrt_add(from, RPL_LIFETIME(instance, instance->default_lifetime));
   }
   p->dtsn = dio->dtsn;
+}
+  }
 }
 /*---------------------------------------------------------------------------*/
 void

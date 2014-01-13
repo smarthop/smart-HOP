@@ -81,7 +81,6 @@ tcpip_handler(void)
 
   if(uip_newdata()) {
     leds_on(LEDS_BLUE);
-    /*if(uip_ipaddr_cmp(&UIP_IP_BUF->srcipaddr,&(dag->preferred_parent->addr))) */
     str = uip_appdata;
     str[uip_datalen()] = '\0';
     /*PRINT6ADDR(&UIP_IP_BUF->srcipaddr); */
@@ -178,10 +177,6 @@ PROCESS_THREAD(udp_client_process, ev, data)
   static struct etimer periodic;
   static struct ctimer backoff_timer;
 
-#if WITH_COMPOWER
-  static int print = 0;
-#endif
-
   PROCESS_BEGIN();
 
   PROCESS_PAUSE();
@@ -206,10 +201,6 @@ PROCESS_THREAD(udp_client_process, ev, data)
   PRINTF(" local/remote port %u/%u\n",
          UIP_HTONS(client_conn->lport), UIP_HTONS(client_conn->rport));
 
-#if WITH_COMPOWER
-  powertrace_sniff(POWERTRACE_ON);
-#endif
-
   etimer_set(&periodic, SEND_INTERVAL);
   while(1) {
     PROCESS_YIELD();
@@ -222,15 +213,6 @@ PROCESS_THREAD(udp_client_process, ev, data)
       if(mobility_flag == 0) {
         ctimer_set(&backoff_timer, SEND_TIME, send_packet, NULL);
       }
-
-#if WITH_COMPOWER
-      if(print == 0) {
-        powertrace_print("#P");
-      }
-      if(++print == 3) {
-        print = 0;
-      }
-#endif
     }
   }
 

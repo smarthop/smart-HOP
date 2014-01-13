@@ -48,7 +48,6 @@
 #include "net/uip-nd6.h"
 #include "net/uip-icmp6.h"
 #include "net/rpl/rpl-private.h"
-/*#include "net/rpl/rpl-unreach.h"*/
 #include "net/packetbuf.h"
 #include "net/tcpip.h"
 #include <limits.h>
@@ -298,7 +297,7 @@ dis_output(uip_ipaddr_t *addr, uint8_t flags, uint8_t counter)
 {
   unsigned char *buffer;
   uip_ipaddr_t tmpaddr;
-  char process_start_wait_dios = 0;
+  char process_start_wait_dios;
 
   /* DAG Information Solicitation  - 2 bytes reserved      */
   /*      0                   1                   2        */
@@ -658,8 +657,7 @@ eventhandler3(process_event_t ev, process_data_t data)
         PRINTF("Best -> ");
         PRINT6ADDR(&best_parent_addr);
         PRINTF("\n");
-        if(uip_ipaddr_cmp
-             (&best_parent_addr, &(dag->preferred_parent->addr))) {
+        if(uip_ipaddr_cmp(&best_parent_addr, (rpl_get_parent_ipaddr(dag->preferred_parent)))) {
           /*PRINTF("Best parent = current parent\n"); */
           if(best_parent_rssi > 255) {
             best_parent_rssi -= 255;
@@ -684,7 +682,7 @@ eventhandler3(process_event_t ev, process_data_t data)
           /*instance = rpl_get_instance(best_parent_dio.instance_id);
              rpl_set_default_route(instance,&best_parent_addr); */
         } else {
-          rpl_remove_parent(dag, dag->preferred_parent);
+          rpl_remove_parent(dag->preferred_parent);
           rpl_process_dio(&best_parent_addr, &best_parent_dio, 1);
         }
         for(k = 0; k < j; k++) {

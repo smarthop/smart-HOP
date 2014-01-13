@@ -4,7 +4,6 @@
 #define NULLRDC_802154_AUTOACK_HW 1
 #define RPL_MAX_PARENTS_PER_DAG 10
 #define RPL_CONF_DAO_ACK 1
-
 /*Configurations for a Mobile Node*/
 #define MOBILE_NODE 1
 #define RPL_CONF_LEAF_ONLY 1

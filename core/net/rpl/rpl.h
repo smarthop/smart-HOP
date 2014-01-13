@@ -210,6 +210,8 @@ struct rpl_instance {
   uint8_t dio_intcurrent;
   uint8_t dio_send; /* for keeping track of which mode the timer is in */
   uint8_t dio_counter;
+  uint8_t dios;
+  uint8_t dio_reset_flag;
   rpl_rank_t max_rankinc;
   rpl_rank_t min_hoprankinc;
   uint16_t lifetime_unit; /* lifetime in seconds = l_u * d_l */

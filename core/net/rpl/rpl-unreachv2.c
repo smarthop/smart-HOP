@@ -33,11 +33,11 @@ rpl_instance_t *end;
 uip_ipaddr_t *pref;
 rpl_dio_t dio;
 uint8_t counter = 1;
-int rssi;
-char reliable;
+int rssi=0;
+char reliable=0;
 static int dis_burst_flag = 0, wait_dio_flag = 0;
 static struct etimer dio_check, dis_timer;
-uint32_t current_t;
+uint32_t current_t=0;
 
 PROCESS(unreach_process, "rpl-unreach process");
 process_event_t unreach_event;

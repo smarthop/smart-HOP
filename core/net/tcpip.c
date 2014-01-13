@@ -100,12 +100,6 @@ static struct internal_state {
 } s;
 #endif
 
-enum {
-  TCP_POLL,
-  UDP_POLL,
-  PACKET_INPUT
-};
-
 /* Called on IP packet output. */
 #if UIP_CONF_IPV6
 
