@@ -41,14 +41,13 @@
  * Contributors: Niclas Finne <nfi@sics.se>, Joel Hoglund <joel@sics.se>,
  *               Mathieu Pouillot <m.pouillot@watteco.com>
  */
-
+#include "net/tcpip.h"
 #include "net/uip.h"
 #include "net/uip-ds6.h"
 #include "net/uip-nd6.h"
 #include "net/uip-icmp6.h"
 #include "net/rpl/rpl-private.h"
 #include "net/packetbuf.h"
-#include "net/tcpip.h"
 #include <limits.h>
 #include <string.h>
 #include <stdlib.h>
@@ -571,7 +570,8 @@ dio_input(void)
 #ifdef RPL_DEBUG_DIO_INPUT
   RPL_DEBUG_DIO_INPUT(&from, &dio);
 #endif
-#if MOBILE_NODE
+
+/*#if MOBILE_NODE*/
   if(dio.flags == 1 && mobility_flag == 1) {
     process_post_synch(&unreach_process, STOP_DIO_CHECK, NULL);
     process_post_synch(&unreach_process, PARENT_REACHABLE, dio.rssi);
@@ -589,7 +589,7 @@ dio_input(void)
     /*PRINTF("j = %d\n",j); */
     return;
   }
-#endif
+/*#endif*/
   if(mobility_flag != 1 && dio.flags == 0) {
     rpl_process_dio(&from, &dio, 0);
   }
