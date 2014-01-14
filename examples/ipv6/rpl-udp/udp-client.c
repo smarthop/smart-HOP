@@ -40,6 +40,7 @@
 #include "net/rpl/rpl-private.h"
 #include "dev/cc2420.h"
 #include "dev/leds.h"
+#include "net/tcpip.h"
 #ifdef WITH_COMPOWER
 #include "powertrace.h"
 #endif

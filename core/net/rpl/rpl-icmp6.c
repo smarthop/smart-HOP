@@ -42,7 +42,6 @@
  *               Mathieu Pouillot <m.pouillot@watteco.com>
  */
 
-#include "net/tcpip.h"
 #include "net/uip.h"
 #include "net/uip-ds6.h"
 #include "net/uip-nd6.h"
