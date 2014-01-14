@@ -26,13 +26,13 @@
  * This file is part of the Contiki operating system.
  *
  */
+
 #include "contiki.h"
 #include "contiki-lib.h"
 #include "contiki-net.h"
 #include "net/uip.h"
 #include "net/rpl/rpl.h"
 #include "dev/cc2420.h"
-
 #include "net/netstack.h"
 #include "dev/button-sensor.h"
 #include <stdio.h>
@@ -54,7 +54,8 @@
 #define RPL_CONF_LEAF_ONLY 1
 
 static struct uip_udp_conn *server_conn;
-int rssi_rec = 0, packets = 0;
+int rssi_rec=0, rssi_packets=0;
+unsigned int packets;
 
 PROCESS(udp_server_process, "UDP server process");
 AUTOSTART_PROCESSES(&udp_server_process);
@@ -67,22 +68,23 @@ tcpip_handler(void)
   char buf[10];
 
   if(uip_newdata()) {
-    packets++;
-    rssi_rec += packetbuf_attr(PACKETBUF_ATTR_RSSI) - 45;
+	  packets++;
+	  rssi_packets++;
+    rssi_rec+=packetbuf_attr(PACKETBUF_ATTR_RSSI)-45;
     appdata = (char *)uip_appdata;
     appdata[uip_datalen()] = 0;
     PRINTF("DATA recv '%s' from ", appdata);
     PRINTF("%d",
            UIP_IP_BUF->srcipaddr.u8[sizeof(UIP_IP_BUF->srcipaddr.u8) - 1]);
     PRINTF("\n");
-    if(packets == 3) {
-      sprintf(buf, "%d", rssi_rec / packets);
-      PRINTF("RSSI: %d\n",rssi_rec/packets);
-      uip_ipaddr_copy(&server_conn->ripaddr, &UIP_IP_BUF->srcipaddr);
-      uip_udp_packet_send(server_conn, buf, strlen(buf));
-      uip_create_unspecified(&server_conn->ripaddr);
-      packets = 0;
-      rssi_rec = 0;
+    if(rssi_packets==3){
+    	sprintf(buf, "%d %u", rssi/rssi_packets, packets);
+		/*PRINTF("RSSI: %d, %d\n",rssi/rssi_packets, packets);*/
+		uip_ipaddr_copy(&server_conn->ripaddr, &UIP_IP_BUF->srcipaddr);
+		uip_udp_packet_send(server_conn, buf, strlen(buf));
+		uip_create_unspecified(&server_conn->ripaddr);
+		rssi_packets = 0;
+		rssi_rec=0;
     }
   }
 }

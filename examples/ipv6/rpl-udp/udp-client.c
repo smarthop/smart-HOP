@@ -91,7 +91,7 @@ tcpip_handler(void)
     leds_off(LEDS_BLUE);
     if(rrssi <= RSSI_THRESHOLD && mobility_flag == 0
        && hand_off_backoff_flag == 0) {
-      PRINTF("RSSI UNDER -90!!!!!!\n");
+      printf("RSSI UNDER -90!!!!!!\n");
       test_unreachable = 1;
       process_post(&unreach_process, PARENT_UNREACHABLE, NULL);
       return;

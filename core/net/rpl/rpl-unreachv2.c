@@ -14,7 +14,6 @@
 #include "sys/ctimer.h"
 #include "net/packetbuf.h"
 #include "sys/clock.h"
-#include "net/tcpip.h"
 #include <limits.h>
 #include <string.h>
 #include "net/uip-debug.h"
@@ -70,10 +69,11 @@ eventhandler(process_event_t ev, process_data_t data)
 
   case PARENT_UNREACHABLE:
     {
-
+    	printf("parent unreachable..unable get best parent\n");
       instance = &instance_table[0];
       dag = instance->current_dag;
       /*find a different method of differentiation */
+
       for(p = nbr_table_head(rpl_parents);p != NULL;p = nbr_table_next(rpl_parents, p))
       {
         if(p == dag->preferred_parent && test_unreachable == 1
