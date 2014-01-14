@@ -49,9 +49,12 @@
 #define UDP_SERVER_PORT 5678
 
 #define UDP_EXAMPLE_ID  190
+/* Configurations for APs*/
+#define MOBILE_NODE 0
+#define RPL_CONF_LEAF_ONLY 1
 
 static struct uip_udp_conn *server_conn;
-int rssi = 0, packets = 0;
+int rssi_rec = 0, packets = 0;
 
 PROCESS(udp_server_process, "UDP server process");
 AUTOSTART_PROCESSES(&udp_server_process);
@@ -65,7 +68,7 @@ tcpip_handler(void)
 
   if(uip_newdata()) {
     packets++;
-    rssi += packetbuf_attr(PACKETBUF_ATTR_RSSI) - 45;
+    rssi_rec += packetbuf_attr(PACKETBUF_ATTR_RSSI) - 45;
     appdata = (char *)uip_appdata;
     appdata[uip_datalen()] = 0;
     PRINTF("DATA recv '%s' from ", appdata);
@@ -73,13 +76,13 @@ tcpip_handler(void)
            UIP_IP_BUF->srcipaddr.u8[sizeof(UIP_IP_BUF->srcipaddr.u8) - 1]);
     PRINTF("\n");
     if(packets == 3) {
-      sprintf(buf, "%d", rssi / packets);
-      /*PRINTF("RSSI: %d\n",rssi/packets); */
+      sprintf(buf, "%d", rssi_rec / packets);
+      PRINTF("RSSI: %d\n",rssi_rec/packets);
       uip_ipaddr_copy(&server_conn->ripaddr, &UIP_IP_BUF->srcipaddr);
       uip_udp_packet_send(server_conn, buf, strlen(buf));
       uip_create_unspecified(&server_conn->ripaddr);
       packets = 0;
-      rssi = 0;
+      rssi_rec = 0;
     }
   }
 }

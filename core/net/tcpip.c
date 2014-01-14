@@ -41,7 +41,7 @@
 #include "contiki-net.h"
 #include "net/uip-split.h"
 #include "net/uip-packetqueue.h"
-#include "net/rpl/rpl-private.h"
+#include "rpl/rpl-private.h"
 #include "dev/leds.h"
 #if UIP_CONF_IPV6
 #include "net/uip-nd6.h"
@@ -49,7 +49,7 @@
 #endif
 #include "sys/clock.h"
 #include <string.h>
-
+#define MOBILE_NODE 1
 #define DEBUG DEBUG_NONE
 #include "net/uip-debug.h"
 
@@ -217,11 +217,6 @@ void hand_off_backoff(void)
 static void
 packet_input(void)
 {
-  /*instance = &instance_table[0];
-      dag=instance->current_dag;
-  if(uip_ipaddr_cmp(&UIP_IP_BUF->srcipaddr,&(dag->preferred_parent->addr))==0)
-  {*/
-/*printf("mobility_flag = %d\n",mobility_flag);*/
 
 #if MOBILE_NODE
       etimer_set(&unreach,NO_DATA_PERIOD);
@@ -496,15 +491,16 @@ eventhandler(process_event_t ev, process_data_t data)
 #endif /* UIP_CONF_IP_FORWARD */
         }
         /*Unreachability detection timer*/
-#if MOBILE_NODE
+
         if((data == &unreach) && (etimer_expired(&unreach)) && mobility_flag==0 && hand_off_backoff_flag==0){
           NO_DATA=1;
         	if(unreach_flag==0){
         		rpl_unreach();
         		unreach_flag++;
+        		printf("UNREACH!!!!\n");
         	}
         }
-#endif
+
  /*       if((data == &check_dios) && (etimer_expired(&check_dios))){
 PRINTF("TIMER EXPIRED!\n");
 PRINTF("Flag: %u\n",(unsigned)dio.flags);

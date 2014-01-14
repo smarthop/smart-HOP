@@ -27,6 +27,7 @@
  *
  */
 
+#include "net/tcpip.h"
 #include "contiki.h"
 #include "lib/random.h"
 #include "sys/ctimer.h"
@@ -40,10 +41,6 @@
 #include "net/rpl/rpl-private.h"
 #include "dev/cc2420.h"
 #include "dev/leds.h"
-#include "net/tcpip.h"
-#ifdef WITH_COMPOWER
-#include "powertrace.h"
-#endif
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -51,6 +48,10 @@
 #define UDP_CLIENT_PORT 8765
 #define UDP_SERVER_PORT 5678
 #define UDP_EXAMPLE_ID  190
+
+/*Configurations for a Mobile Node*/
+#define MOBILE_NODE 1
+#define RPL_CONF_LEAF_ONLY 1
 
 #define DEBUG DEBUG_PRINT
 #include "net/uip-debug.h"
@@ -84,14 +85,13 @@ tcpip_handler(void)
     leds_on(LEDS_BLUE);
     str = uip_appdata;
     str[uip_datalen()] = '\0';
-    /*PRINT6ADDR(&UIP_IP_BUF->srcipaddr); */
     rrssi = strtol(str, &ptr, 10);
     packets = strtol(ptr, &ptr, 10);
     PRINTF("rssi = %ld, packets = %ld\n", rrssi, packets);
     leds_off(LEDS_BLUE);
     if(rrssi <= RSSI_THRESHOLD && mobility_flag == 0
        && hand_off_backoff_flag == 0) {
-      /*PRINTF("RSSI\n"); */
+      PRINTF("RSSI UNDER -90!!!!!!\n");
       test_unreachable = 1;
       process_post(&unreach_process, PARENT_UNREACHABLE, NULL);
       return;

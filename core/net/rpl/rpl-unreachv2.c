@@ -18,7 +18,6 @@
 #include <limits.h>
 #include <string.h>
 #include "net/uip-debug.h"
-#include "net/neighbor-info.h"
 
 #define DEBUG DEBUG_NONE
 #define SEND_TIME (CLOCK_SECOND / 50)
@@ -39,11 +38,12 @@ static int dis_burst_flag = 0, wait_dio_flag = 0;
 static struct etimer dio_check, dis_timer;
 uint32_t current_t=0;
 
+/*---------------------------------------------------------------------------*/
+/* Per-parent RPL information */
+NBR_TABLE(rpl_parent_t, rpl_parents);
+
 PROCESS(unreach_process, "rpl-unreach process");
 process_event_t unreach_event;
-
-uip_ds6_nbr_t uip_ds6_nbr_cache[UIP_DS6_NBR_NB];
-uip_ds6_route_t uip_ds6_routing_table[UIP_DS6_ROUTE_NB];
 
 /*---------------------------------------------------------------------------*/
 /* This function is called from rpl-icmp6.c when a DIO was received from the parent, meaning it is reachable after all.
@@ -74,11 +74,12 @@ eventhandler(process_event_t ev, process_data_t data)
       instance = &instance_table[0];
       dag = instance->current_dag;
       /*find a different method of differentiation */
-      for(p = list_head(dag->parents); p != NULL; p = list_item_next(p)) {
+      for(p = nbr_table_head(rpl_parents);p != NULL;p = nbr_table_next(rpl_parents, p))
+      {
         if(p == dag->preferred_parent && test_unreachable == 1
            && hand_off_backoff_flag == 0) {
           printf("Connection unstable\n");
-          pref = &p->addr;
+          pref = rpl_get_parent_ipaddr(p);
           /*packetbuf_clear();
              packetbuf_clear_hdr(); */
           dis_output(pref, 1, 0);
@@ -168,6 +169,7 @@ eventhandler(process_event_t ev, process_data_t data)
     break;
   }
 }
+
 PROCESS_THREAD(unreach_process, ev, data)
 {
   PROCESS_BEGIN();

@@ -1,7 +1,7 @@
+CFLAGS += -DPROJECT_CONF_H=\"project-conf.h\"
 all: udp-client udp-server
 APPS=servreg-hack
 CONTIKI=../../..
-#define WITH_COMPOWER 0
 UIP_CONF_IPV6=1
 
 

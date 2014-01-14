@@ -157,7 +157,7 @@
 /* UIP_CONF_TCP specifies if TCP support should be included or
    not. Disabling TCP saves memory. */
 #ifndef UIP_CONF_TCP
-#define UIP_CONF_TCP 0
+#define UIP_CONF_TCP 1
 #endif /* UIP_CONF_TCP */
 
 /* UIP_CONF_MAX_CONNECTIONS specifies the maximum number of

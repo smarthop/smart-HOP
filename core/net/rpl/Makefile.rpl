@@ -1,4 +1,3 @@
-CFLAGS += -ffunction-sections
- LDFLAGS += -Wl,--gc-sections,--undefined=_reset_vector__,--undefined=InterruptVectors,--undefined=_copy_data_init__,--undefined=_clear_bss_init__,--undefined=_end_of_init__
+CFLAGS += -DPROJECT_CONF_H=\"project-conf.h\"
 CONTIKI_SOURCEFILES += rpl.c rpl-dag.c rpl-icmp6.c rpl-timers.c \
-	rpl-mrhof.c rpl-ext-header.c
+	rpl-mrhof.c rpl-ext-header.c rpl-unreachv2.c
