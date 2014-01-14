@@ -1,3 +1,2 @@
-CFLAGS += -DPROJECT_CONF_H=\"project-conf.h\"
 CONTIKI_SOURCEFILES += rpl.c rpl-dag.c rpl-icmp6.c rpl-timers.c \
 	rpl-mrhof.c rpl-ext-header.c rpl-unreachv2.c

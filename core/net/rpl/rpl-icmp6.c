@@ -48,6 +48,7 @@
 #include "net/uip-icmp6.h"
 #include "net/rpl/rpl-private.h"
 #include "net/packetbuf.h"
+#include "net/tcpip.h"
 #include <limits.h>
 #include <string.h>
 #include <stdlib.h>
@@ -277,6 +278,7 @@ eventhandler2(process_event_t ev, process_data_t data)
   break;
   }
 }
+
 PROCESS_THREAD(multiple_dis_input, ev, data)
 {
   PROCESS_BEGIN();
@@ -295,7 +297,7 @@ dis_output(uip_ipaddr_t *addr, uint8_t flags, uint8_t counter)
 {
   unsigned char *buffer;
   uip_ipaddr_t tmpaddr;
-  char process_start_wait_dios;
+  char process_start_wait_dios=0;
 
   /* DAG Information Solicitation  - 2 bytes reserved      */
   /*      0                   1                   2        */
@@ -571,7 +573,7 @@ dio_input(void)
   RPL_DEBUG_DIO_INPUT(&from, &dio);
 #endif
 
-/*#if MOBILE_NODE*/
+#if MOBILE_NODE
   if(dio.flags == 1 && mobility_flag == 1) {
     process_post_synch(&unreach_process, STOP_DIO_CHECK, NULL);
     process_post_synch(&unreach_process, PARENT_REACHABLE, dio.rssi);
@@ -589,7 +591,7 @@ dio_input(void)
     /*PRINTF("j = %d\n",j); */
     return;
   }
-/*#endif*/
+#endif
   if(mobility_flag != 1 && dio.flags == 0) {
     rpl_process_dio(&from, &dio, 0);
   }

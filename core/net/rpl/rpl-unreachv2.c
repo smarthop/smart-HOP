@@ -14,6 +14,7 @@
 #include "sys/ctimer.h"
 #include "net/packetbuf.h"
 #include "sys/clock.h"
+#include "net/tcpip.h"
 #include <limits.h>
 #include <string.h>
 #include "net/uip-debug.h"
@@ -31,11 +32,11 @@ rpl_instance_t *end;
 uip_ipaddr_t *pref;
 rpl_dio_t dio;
 uint8_t counter = 1;
-int rssi=0;
-char reliable=0;
+int rssi;
+char reliable;
 static int dis_burst_flag = 0, wait_dio_flag = 0;
 static struct etimer dio_check, dis_timer;
-uint32_t current_t=0;
+uint32_t current_t;
 
 /*---------------------------------------------------------------------------*/
 /* Per-parent RPL information */
@@ -76,6 +77,7 @@ eventhandler(process_event_t ev, process_data_t data)
 
       for(p = nbr_table_head(rpl_parents);p != NULL;p = nbr_table_next(rpl_parents, p))
       {
+    	  printf("inside the loop FOR\n");
         if(p == dag->preferred_parent && test_unreachable == 1
            && hand_off_backoff_flag == 0) {
           printf("Connection unstable\n");
@@ -90,7 +92,7 @@ eventhandler(process_event_t ev, process_data_t data)
           } else {
             etimer_reset(&dio_check);
           }
-        }
+}
       }
     }
     break;
@@ -98,7 +100,6 @@ eventhandler(process_event_t ev, process_data_t data)
   case PARENT_REACHABLE:
     {
       uint8_t *dis_rssi;
-
       dis_rssi = data;
       /*printf("dis_rssi = %d",dis_rssi); */
       rssi = dis_rssi - 45;
@@ -165,10 +166,11 @@ eventhandler(process_event_t ev, process_data_t data)
           dis_burst_flag = 0;
         }
       }
-    }
-    break;
-  }
+
+  } break;
+};
 }
+
 
 PROCESS_THREAD(unreach_process, ev, data)
 {

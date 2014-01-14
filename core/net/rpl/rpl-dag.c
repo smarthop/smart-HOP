@@ -1292,7 +1292,7 @@ rpl_process_dio(uip_ipaddr_t *from, rpl_dio_t *dio, int mobility)
     PRINTF("RPL: The candidate parent is rejected\n");
     return;
   }
-
+}
   /* We don't use route control, so we can have only one official parent. */
   if(mobility==0){
   if(dag->joined && p == dag->preferred_parent) {
@@ -1304,10 +1304,9 @@ rpl_process_dio(uip_ipaddr_t *from, rpl_dio_t *dio, int mobility)
      * Call uip_ds6_defrt_add to set a fresh value for the lifetime counter */
     uip_ds6_defrt_add(from, RPL_LIFETIME(instance, instance->default_lifetime));
   }
-  p->dtsn = dio->dtsn;
 }
+p->dtsn = dio->dtsn;
   }
-}
 /*---------------------------------------------------------------------------*/
 void
 rpl_lock_parent(rpl_parent_t *p)

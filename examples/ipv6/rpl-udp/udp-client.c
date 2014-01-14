@@ -27,7 +27,7 @@
  *
  */
 
-#include "net/tcpip.h"
+
 #include "contiki.h"
 #include "lib/random.h"
 #include "sys/ctimer.h"
@@ -49,9 +49,7 @@
 #define UDP_SERVER_PORT 5678
 #define UDP_EXAMPLE_ID  190
 
-/*Configurations for a Mobile Node*/
-#define MOBILE_NODE 1
-#define RPL_CONF_LEAF_ONLY 1
+
 
 #define DEBUG DEBUG_PRINT
 #include "net/uip-debug.h"
@@ -91,9 +89,9 @@ tcpip_handler(void)
     leds_off(LEDS_BLUE);
     if(rrssi <= RSSI_THRESHOLD && mobility_flag == 0
        && hand_off_backoff_flag == 0) {
+    	rpl_unreach();
       printf("RSSI UNDER -90!!!!!!\n");
       test_unreachable = 1;
-      process_post(&unreach_process, PARENT_UNREACHABLE, NULL);
       return;
     }
   }
@@ -108,9 +106,9 @@ send_packet(void *ptr)
   /*PRINTF("Mobility flag = %d\n",mobility_flag); */
   seq_id++;
 
-  PRINTF("%d 'Hello %d'\n",
+  PRINTF("%d 'Hi %d'\n",
          server_ipaddr.u8[sizeof(server_ipaddr.u8) - 1], seq_id);
-  sprintf(buf, "Hello %d", seq_id);
+  sprintf(buf, "Hi %d", seq_id);
   uip_udp_packet_sendto(client_conn, buf, strlen(buf),
                         &server_ipaddr, UIP_HTONS(UDP_SERVER_PORT));
   if(NO_DATA == 1 && mobility_flag == 0 && hand_off_backoff_flag == 0) {

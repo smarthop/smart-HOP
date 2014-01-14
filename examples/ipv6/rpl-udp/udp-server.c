@@ -27,6 +27,8 @@
  *
  */
 
+
+
 #include "contiki.h"
 #include "contiki-lib.h"
 #include "contiki-net.h"
@@ -49,9 +51,7 @@
 #define UDP_SERVER_PORT 5678
 
 #define UDP_EXAMPLE_ID  190
-/* Configurations for APs*/
-#define MOBILE_NODE 0
-#define RPL_CONF_LEAF_ONLY 1
+
 
 static struct uip_udp_conn *server_conn;
 int rssi_rec=0, rssi_packets=0;
@@ -78,7 +78,7 @@ tcpip_handler(void)
            UIP_IP_BUF->srcipaddr.u8[sizeof(UIP_IP_BUF->srcipaddr.u8) - 1]);
     PRINTF("\n");
     if(rssi_packets==3){
-    	sprintf(buf, "%d %u", rssi/rssi_packets, packets);
+    	sprintf(buf, "%d %u", rssi_rec/rssi_packets, packets);
 		/*PRINTF("RSSI: %d, %d\n",rssi/rssi_packets, packets);*/
 		uip_ipaddr_copy(&server_conn->ripaddr, &UIP_IP_BUF->srcipaddr);
 		uip_udp_packet_send(server_conn, buf, strlen(buf));
