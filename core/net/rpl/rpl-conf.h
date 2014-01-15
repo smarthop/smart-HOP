@@ -38,15 +38,14 @@
 #ifndef RPL_CONF_H
 #define RPL_CONF_H
 
-
 /* Set to 1 to enable RPL statistics */
 #ifndef RPL_CONF_STATS
 #define RPL_CONF_STATS 0
 #endif /* RPL_CONF_STATS */
 
-/* 
+/*
  * Select routing metric supported at runtime. This must be a valid
- * DAG Metric Container Object Type (see below). Currently, we only 
+ * DAG Metric Container Object Type (see below). Currently, we only
  * support RPL_DAG_MC_ETX and RPL_DAG_MC_ENERGY.
  * When MRHOF (RFC6719) is used with ETX, no metric container must
  * be used; instead the rank carries ETX directly.
@@ -58,8 +57,8 @@
 #endif /* RPL_CONF_DAG_MC */
 
 /*
- * The objective function used by RPL is configurable through the 
- * RPL_CONF_OF parameter. This should be defined to be the name of an 
+ * The objective function used by RPL is configurable through the
+ * RPL_CONF_OF parameter. This should be defined to be the name of an
  * rpl_of object linked into the system image, e.g., rpl_of0.
  */
 #ifdef RPL_CONF_OF
@@ -73,7 +72,7 @@
 #ifdef RPL_CONF_DEFAULT_INSTANCE
 #define RPL_DEFAULT_INSTANCE RPL_CONF_DEFAULT_INSTANCE
 #else
-#define RPL_DEFAULT_INSTANCE	       0x1e
+#define RPL_DEFAULT_INSTANCE         0x1e
 #endif /* RPL_CONF_DEFAULT_INSTANCE */
 
 /*
@@ -105,16 +104,16 @@
 #endif /* RPL_CONF_MAX_DAG_PER_INSTANCE */
 
 /*
- * 
+ *
  */
 #ifndef RPL_CONF_DAO_SPECIFY_DAG
-  #if RPL_MAX_DAG_PER_INSTANCE > 1
-    #define RPL_DAO_SPECIFY_DAG 1
-  #else
-    #define RPL_DAO_SPECIFY_DAG 0
-  #endif /* RPL_MAX_DAG_PER_INSTANCE > 1 */
+#if RPL_MAX_DAG_PER_INSTANCE > 1
+#define RPL_DAO_SPECIFY_DAG 1
 #else
-  #define RPL_DAO_SPECIFY_DAG RPL_CONF_DAO_SPECIFY_DAG
+#define RPL_DAO_SPECIFY_DAG 0
+#endif /* RPL_MAX_DAG_PER_INSTANCE > 1 */
+#else
+#define RPL_DAO_SPECIFY_DAG RPL_CONF_DAO_SPECIFY_DAG
 #endif /* RPL_CONF_DAO_SPECIFY_DAG */
 
 /*

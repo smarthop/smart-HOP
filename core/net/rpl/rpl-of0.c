@@ -69,7 +69,6 @@ reset(rpl_dag_t *dag)
 {
   PRINTF("RPL: Resetting OF0\n");
 }
-
 static rpl_rank_t
 calculate_rank(rpl_parent_t *p, rpl_rank_t base_rank)
 {
@@ -82,23 +81,21 @@ calculate_rank(rpl_parent_t *p, rpl_rank_t base_rank)
   }
 
   increment = p != NULL ?
-                p->dag->instance->min_hoprankinc :
-                DEFAULT_RANK_INCREMENT;
+    p->dag->instance->min_hoprankinc :
+    DEFAULT_RANK_INCREMENT;
 
   if((rpl_rank_t)(base_rank + increment) < base_rank) {
     PRINTF("RPL: OF0 rank %d incremented to infinite rank due to wrapping\n",
-        base_rank);
+           base_rank);
     return INFINITE_RANK;
   }
   return base_rank + increment;
-
 }
-
 static rpl_dag_t *
 best_dag(rpl_dag_t *d1, rpl_dag_t *d2)
 {
   if(d1->grounded) {
-    if (!d2->grounded) {
+    if(!d2->grounded) {
       return d1;
     }
   } else if(d2->grounded) {
@@ -119,26 +116,24 @@ best_dag(rpl_dag_t *d1, rpl_dag_t *d2)
     return d1;
   }
 }
-
 static rpl_parent_t *
 best_parent(rpl_parent_t *p1, rpl_parent_t *p2)
 {
   rpl_rank_t r1, r2;
   rpl_dag_t *dag;
-  
+
   PRINTF("RPL: Comparing parent ");
   PRINT6ADDR(rpl_get_parent_ipaddr(p1));
   PRINTF(" (confidence %d, rank %d) with parent ",
-        p1->link_metric, p1->rank);
+         p1->link_metric, p1->rank);
   PRINT6ADDR(rpl_get_parent_ipaddr(p2));
   PRINTF(" (confidence %d, rank %d)\n",
-        p2->link_metric, p2->rank);
+         p2->link_metric, p2->rank);
 
-
-  r1 = DAG_RANK(p1->rank, p1->dag->instance) * RPL_MIN_HOPRANKINC  +
-         p1->link_metric;
-  r2 = DAG_RANK(p2->rank, p1->dag->instance) * RPL_MIN_HOPRANKINC  +
-         p2->link_metric;
+  r1 = DAG_RANK(p1->rank, p1->dag->instance) * RPL_MIN_HOPRANKINC +
+    p1->link_metric;
+  r2 = DAG_RANK(p2->rank, p1->dag->instance) * RPL_MIN_HOPRANKINC +
+    p2->link_metric;
   /* Compare two parents by looking both and their rank and at the ETX
      for that parent. We choose the parent that has the most
      favourable combination. */
@@ -153,7 +148,6 @@ best_parent(rpl_parent_t *p1, rpl_parent_t *p2)
     return p2;
   }
 }
-
 static void
 update_metric_container(rpl_instance_t *instance)
 {

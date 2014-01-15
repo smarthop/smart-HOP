@@ -75,7 +75,7 @@ handle_periodic_timer(void *ptr)
   next_dis++;
   if(rpl_get_any_dag() == NULL && next_dis >= RPL_DIS_INTERVAL) {
     next_dis = 0;
-    dis_output(NULL,0,0);
+    dis_output(NULL, 0, 0);
   }
 #endif
   ctimer_reset(&periodic_timer);
@@ -87,57 +87,57 @@ new_dio_interval(rpl_instance_t *instance, uip_ipaddr_t *dio_addr, uint8_t flag,
   uint32_t time, time2;
   clock_time_t ticks;
 
-  if(flag==2){
-    mobile_dio_addr=dio_addr;
-    instance->dio_reset_flag=1;
+  if(flag == 2) {
+    mobile_dio_addr = dio_addr;
+    instance->dio_reset_flag = 1;
     /*
      * When mobility is being performed, DIOs need to be sent randomly so that there's no conflict.
      * The delay depends on the priority given to them according to the rssi reading.
      * Trickle will not be affected.
      */
-      time2 = (priority * CLOCK_SECOND) / 30;
-      /*dio_output(instance, mobile_dio_addr, 2);*/
-      PRINTF("RPL: Scheduling DIO timer %lu ticks in future\n", time2);
-      ctimer_set(&instance->dio_timer, time2, &handle_dio_timer, instance);
-  }else{
-        /* TODO: too small timer intervals for many cases */
-        time = 1UL << instance->dio_intcurrent;
+    time2 = (priority * CLOCK_SECOND) / 30;
+    /*dio_output(instance, mobile_dio_addr, 2);*/
+    PRINTF("RPL: Scheduling DIO timer %lu ticks in future\n", time2);
+    ctimer_set(&instance->dio_timer, time2, &handle_dio_timer, instance);
+  } else {
+    /* TODO: too small timer intervals for many cases */
+    time = 1UL << instance->dio_intcurrent;
 
-  /* Convert from milliseconds to CLOCK_TICKS. */
-  ticks = (time * CLOCK_SECOND) / 1000;
-  instance->dio_next_delay = ticks;
+    /* Convert from milliseconds to CLOCK_TICKS. */
+    ticks = (time * CLOCK_SECOND) / 1000;
+    instance->dio_next_delay = ticks;
 
-  /* random number between I/2 and I */
-  ticks = ticks / 2 + (ticks / 2 * (uint32_t)random_rand()) / RANDOM_RAND_MAX;
+    /* random number between I/2 and I */
+    ticks = ticks / 2 + (ticks / 2 * (uint32_t)random_rand()) / RANDOM_RAND_MAX;
 
-  /*
-   * The intervals must be equally long among the nodes for Trickle to
-   * operate efficiently. Therefore we need to calculate the delay between
-   * the randomized time and the start time of the next interval.
-   */
-  instance->dio_next_delay -= ticks;
-  instance->dio_send = 1;
+    /*
+     * The intervals must be equally long among the nodes for Trickle to
+     * operate efficiently. Therefore we need to calculate the delay between
+     * the randomized time and the start time of the next interval.
+     */
+    instance->dio_next_delay -= ticks;
+    instance->dio_send = 1;
 
 #if RPL_CONF_STATS
-  /* keep some stats */
-  instance->dio_totint++;
-  instance->dio_totrecv += instance->dio_counter;
-  ANNOTATE("#A rank=%u.%u(%u),stats=%d %d %d %d,color=%s\n",
-	   DAG_RANK(instance->current_dag->rank, instance),
-           (10 * (instance->current_dag->rank % instance->min_hoprankinc)) / instance->min_hoprankinc,
-           instance->current_dag->version,
-           instance->dio_totint, instance->dio_totsend,
-           instance->dio_totrecv,instance->dio_intcurrent,
-	   instance->current_dag->rank == ROOT_RANK(instance) ? "BLUE" : "ORANGE");
+    /* keep some stats */
+    instance->dio_totint++;
+    instance->dio_totrecv += instance->dio_counter;
+    ANNOTATE("#A rank=%u.%u(%u),stats=%d %d %d %d,color=%s\n",
+             DAG_RANK(instance->current_dag->rank, instance),
+             (10 * (instance->current_dag->rank % instance->min_hoprankinc)) / instance->min_hoprankinc,
+             instance->current_dag->version,
+             instance->dio_totint, instance->dio_totsend,
+             instance->dio_totrecv, instance->dio_intcurrent,
+             instance->current_dag->rank == ROOT_RANK(instance) ? "BLUE" : "ORANGE");
 #endif /* RPL_CONF_STATS */
 
-  /* reset the redundancy counter */
-  instance->dio_counter = 0;
+    /* reset the redundancy counter */
+    instance->dio_counter = 0;
 
-  /* schedule the timer */
-  PRINTF("RPL: Scheduling DIO timer %lu ticks in future (Interval)\n", ticks);
-  ctimer_set(&instance->dio_timer, ticks, &handle_dio_timer, instance);
-}
+    /* schedule the timer */
+    PRINTF("RPL: Scheduling DIO timer %lu ticks in future (Interval)\n", ticks);
+    ctimer_set(&instance->dio_timer, ticks, &handle_dio_timer, instance);
+  }
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -148,11 +148,11 @@ handle_dio_timer(void *ptr)
   instance = (rpl_instance_t *)ptr;
 
   PRINTF("RPL: DIO Timer triggered\n");
-  if(instance->dio_reset_flag==1){
+  if(instance->dio_reset_flag == 1) {
     dio_output(instance, mobile_dio_addr, 2);
-    instance->dio_reset_flag=0;
+    instance->dio_reset_flag = 0;
     return;
-    }
+  }
 
   if(!dio_send_ok) {
     if(uip_ds6_get_link_local(ADDR_PREFERRED) != NULL) {
@@ -185,7 +185,7 @@ handle_dio_timer(void *ptr)
       instance->dio_intcurrent++;
       PRINTF("RPL: DIO Timer interval doubled %d\n", instance->dio_intcurrent);
     }
-    new_dio_interval(instance,NULL,0,0);
+    new_dio_interval(instance, NULL, 0, 0);
   }
 }
 /*---------------------------------------------------------------------------*/
@@ -207,10 +207,10 @@ rpl_reset_dio_timer(rpl_instance_t *instance)
 {
   /*if flag = 1, we don't want to do any check for the dio_intcurrent or dio_intmin or the DIO might not be sent*/
   /*instance->dio_reset_flag=flag;
-  if(flag==1){
-    new_dio_interval(instance, priority);
-    return;
-  }*/
+     if(flag==1){
+     new_dio_interval(instance, priority);
+     return;
+     }*/
 
 #if !RPL_LEAF_ONLY
   /* Do not reset if we are already on the minimum interval,
@@ -218,7 +218,7 @@ rpl_reset_dio_timer(rpl_instance_t *instance)
   if(instance->dio_intcurrent > instance->dio_intmin) {
     instance->dio_counter = 0;
     instance->dio_intcurrent = instance->dio_intmin;
-    new_dio_interval(instance,NULL,0,0);
+    new_dio_interval(instance, NULL, 0, 0);
   }
 #if RPL_CONF_STATS
   rpl_stats.resets++;

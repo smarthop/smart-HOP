@@ -37,7 +37,7 @@
  * \file
  *         The Minimum Rank with Hysteresis Objective Function (MRHOF)
  *
- *         This implementation uses the estimated number of 
+ *         This implementation uses the estimated number of
  *         transmissions (ETX) as the additive routing metric,
  *         and also provides stubs for the energy metric.
  *
@@ -72,16 +72,16 @@ rpl_of_t rpl_mrhof = {
 #define ETX_ALPHA   90
 
 /* Reject parents that have a higher link metric than the following. */
-#define MAX_LINK_METRIC			10
+#define MAX_LINK_METRIC     10
 
 /* Reject parents that have a higher path cost than the following. */
-#define MAX_PATH_COST			100
+#define MAX_PATH_COST     100
 
 /*
  * The rank must differ more than 1/PARENT_SWITCH_THRESHOLD_DIV in order
  * to switch preferred parent.
  */
-#define PARENT_SWITCH_THRESHOLD_DIV	2
+#define PARENT_SWITCH_THRESHOLD_DIV 2
 
 typedef uint16_t rpl_path_metric_t;
 
@@ -102,13 +102,11 @@ calculate_path_metric(rpl_parent_t *p)
 #error "Unsupported RPL_DAG_MC configured. See rpl.h."
 #endif /* RPL_DAG_MC */
 }
-
 static void
 reset(rpl_dag_t *sag)
 {
   PRINTF("RPL: Reset MRHOF\n");
 }
-
 static void
 neighbor_link_callback(rpl_parent_t *p, int status, int numtx)
 {
@@ -126,13 +124,12 @@ neighbor_link_callback(rpl_parent_t *p, int status, int numtx)
                (uint32_t)packet_etx * (ETX_SCALE - ETX_ALPHA)) / ETX_SCALE;
 
     PRINTF("RPL: ETX changed from %u to %u (packet ETX = %u)\n",
-        (unsigned)(recorded_etx / RPL_DAG_MC_ETX_DIVISOR),
-        (unsigned)(new_etx  / RPL_DAG_MC_ETX_DIVISOR),
-        (unsigned)(packet_etx / RPL_DAG_MC_ETX_DIVISOR));
+           (unsigned)(recorded_etx / RPL_DAG_MC_ETX_DIVISOR),
+           (unsigned)(new_etx / RPL_DAG_MC_ETX_DIVISOR),
+           (unsigned)(packet_etx / RPL_DAG_MC_ETX_DIVISOR));
     p->link_metric = new_etx;
   }
 }
-
 static rpl_rank_t
 calculate_rank(rpl_parent_t *p, rpl_rank_t base_rank)
 {
@@ -155,14 +152,13 @@ calculate_rank(rpl_parent_t *p, rpl_rank_t base_rank)
     /* Reached the maximum rank. */
     new_rank = INFINITE_RANK;
   } else {
-   /* Calculate the rank based on the new rank information from DIO or
-      stored otherwise. */
+    /* Calculate the rank based on the new rank information from DIO or
+       stored otherwise. */
     new_rank = base_rank + rank_increase;
   }
 
   return new_rank;
 }
-
 static rpl_dag_t *
 best_dag(rpl_dag_t *d1, rpl_dag_t *d2)
 {
@@ -176,7 +172,6 @@ best_dag(rpl_dag_t *d1, rpl_dag_t *d2)
 
   return d1->rank < d2->rank ? d1 : d2;
 }
-
 static rpl_parent_t *
 best_parent(rpl_parent_t *p1, rpl_parent_t *p2)
 {
@@ -188,7 +183,7 @@ best_parent(rpl_parent_t *p1, rpl_parent_t *p2)
   dag = p1->dag; /* Both parents are in the same DAG. */
 
   min_diff = RPL_DAG_MC_ETX_DIVISOR /
-             PARENT_SWITCH_THRESHOLD_DIV;
+    PARENT_SWITCH_THRESHOLD_DIV;
 
   p1_metric = calculate_path_metric(p1);
   p2_metric = calculate_path_metric(p2);
@@ -207,7 +202,6 @@ best_parent(rpl_parent_t *p1, rpl_parent_t *p2)
 
   return p1_metric < p2_metric ? p1 : p2;
 }
-
 #if RPL_DAG_MC == RPL_DAG_MC_NONE
 static void
 update_metric_container(rpl_instance_t *instance)
@@ -231,7 +225,7 @@ update_metric_container(rpl_instance_t *instance)
 
   dag = instance->current_dag;
 
-  if (!dag->joined) {
+  if(!dag->joined) {
     PRINTF("RPL: Cannot update the metric container when not joined\n");
     return;
   }
@@ -247,9 +241,9 @@ update_metric_container(rpl_instance_t *instance)
   instance->mc.obj.etx = path_metric;
 
   PRINTF("RPL: My path ETX to the root is %u.%u\n",
-	instance->mc.obj.etx / RPL_DAG_MC_ETX_DIVISOR,
-	(instance->mc.obj.etx % RPL_DAG_MC_ETX_DIVISOR * 100) /
-	 RPL_DAG_MC_ETX_DIVISOR);
+         instance->mc.obj.etx / RPL_DAG_MC_ETX_DIVISOR,
+         (instance->mc.obj.etx % RPL_DAG_MC_ETX_DIVISOR * 100) /
+         RPL_DAG_MC_ETX_DIVISOR);
 #elif RPL_DAG_MC == RPL_DAG_MC_ENERGY
   instance->mc.length = sizeof(instance->mc.obj.energy);
 

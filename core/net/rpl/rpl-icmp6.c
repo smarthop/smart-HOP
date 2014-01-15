@@ -53,7 +53,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define DEBUG DEBUG_PRINT
+#define DEBUG DEBUG_NONE
 
 #include "net/uip-debug.h"
 
@@ -190,7 +190,7 @@ dis_input(void)
       dag = instance->current_dag;
 #if RPL_LEAF_ONLY
       if(!uip_is_addr_mcast(&UIP_IP_BUF->destipaddr)) {
-	PRINTF("RPL: LEAF ONLY Multicast DIS will NOT reset DIO timer\n");
+        PRINTF("RPL: LEAF ONLY Multicast DIS will NOT reset DIO timer\n");
 #else /* !RPL_LEAF_ONLY */
       if(uip_is_addr_mcast(&UIP_IP_BUF->destipaddr)) {
         /* A flag was introduced to distinguish normal multicast DIS from those triggered by the mobility process.
@@ -241,7 +241,6 @@ dis_input(void)
     }
   }
 }
-
 void
 eventhandler2(process_event_t ev, process_data_t data)
 {
@@ -278,7 +277,6 @@ eventhandler2(process_event_t ev, process_data_t data)
   break;
   }
 }
-
 PROCESS_THREAD(multiple_dis_input, ev, data)
 {
   PROCESS_BEGIN();
@@ -297,7 +295,7 @@ dis_output(uip_ipaddr_t *addr, uint8_t flags, uint8_t counter)
 {
   unsigned char *buffer;
   uip_ipaddr_t tmpaddr;
-  char process_start_wait_dios=0;
+  char process_start_wait_dios = 0;
 
   /* DAG Information Solicitation  - 2 bytes reserved      */
   /*      0                   1                   2        */
@@ -410,16 +408,16 @@ dio_input(void)
      (unsigned)dio.rank); */
 
   dio.grounded = buffer[i] & RPL_DIO_GROUNDED;
-  dio.mop = (buffer[i]& RPL_DIO_MOP_MASK) >> RPL_DIO_MOP_SHIFT;
+  dio.mop = (buffer[i] & RPL_DIO_MOP_MASK) >> RPL_DIO_MOP_SHIFT;
   dio.preference = buffer[i++] & RPL_DIO_PREFERENCE_MASK;
 
   /*0                   1                   2                   3
      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
    | RPLInstanceID |Version Number |             Rank              |
-   |+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   ||G|0| MOP | Prf |     DTSN      |     Flags     |   Reserved    |
-   |+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   ||+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |||G|0| MOP | Prf |     DTSN      |     Flags     |   Reserved    |
+   ||+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
    |                                                               |
    +                                                               +
    |                                                               |
@@ -427,9 +425,9 @@ dio_input(void)
    |                                                               |
    +                                                               +
    |                                                               |
-   |+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   ||+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
    |   Option(s)...
-   |+-+-+-+-+-+-+-+-+
+   ||+-+-+-+-+-+-+-+-+
    * According to the specification, DIO messages have the bytes Flags and Reserved equals to 0
    * Flags is being used to distinguish normal DIO from those triggered by the mobility process
    * When a parent sends a DIS with a flag, a DIO response is expected, and this DIO needs to carry a flag
@@ -565,7 +563,7 @@ dio_input(void)
       break;
     default:
       PRINTF("RPL: Unsupported suboption type in DIO: %u\n",
-	(unsigned)subopt_type);
+             (unsigned)subopt_type);
     }
   }
 
@@ -744,7 +742,7 @@ dio_output(rpl_instance_t *instance, uip_ipaddr_t *uc_addr, uint8_t flags)
 #endif /* !RPL_LEAF_ONLY */
 
 #if RPL_LEAF_ONLY
-  /* In leaf mode, we send DIO message only as unicasts in response to 
+  /* In leaf mode, we send DIO message only as unicasts in response to
      unicast DIS messages. */
   if(uc_addr == NULL) {
     PRINTF("RPL: LEAF ONLY have multicast addr: skip dio_output\n");
@@ -814,7 +812,7 @@ dio_output(rpl_instance_t *instance, uip_ipaddr_t *uc_addr, uint8_t flags)
       buffer[pos++] = instance->mc.obj.energy.energy_est;
     } else {
       PRINTF("RPL: Unable to send DIO because of unhandled DAG MC type %u\n",
-	(unsigned)instance->mc.type);
+             (unsigned)instance->mc.type);
       return;
     }
   }
@@ -854,21 +852,21 @@ dio_output(rpl_instance_t *instance, uip_ipaddr_t *uc_addr, uint8_t flags)
     memcpy(&buffer[pos], &dag->prefix_info.prefix, 16);
     pos += 16;
     /*PRINTF("RPL: Sending prefix info in DIO for ");
-    PRINT6ADDR(&dag->prefix_info.prefix);
-    PRINTF("\n");*/
+       PRINT6ADDR(&dag->prefix_info.prefix);
+       PRINTF("\n");*/
   } else {
     PRINTF("RPL: No prefix to announce (len %d)\n",
            dag->prefix_info.length);
   }
 
 #if RPL_LEAF_ONLY
-#if (DEBUG) & DEBUG_PRINT
+#if (DEBUG)&DEBUG_PRINT
   if(uc_addr == NULL) {
     PRINTF("RPL: LEAF ONLY sending unicast-DIO from multicast-DIO\n");
   }
 #endif /* DEBUG_PRINT */
   PRINTF("RPL: Sending unicast-DIO with rank %u to ",
-      (unsigned)dag->rank);
+         (unsigned)dag->rank);
   PRINT6ADDR(uc_addr);
   PRINTF("\n");
   uip_icmp6_send(uc_addr, ICMP6_RPL, RPL_CODE_DIO, pos);
@@ -876,12 +874,12 @@ dio_output(rpl_instance_t *instance, uip_ipaddr_t *uc_addr, uint8_t flags)
   /* Unicast requests get unicast replies! */
   if(uc_addr == NULL) {
     PRINTF("RPL: Sending a multicast-DIO with rank %u and flags = %d\n",
-        (unsigned)instance->current_dag->rank,flags);
+           (unsigned)instance->current_dag->rank, flags);
     uip_create_linklocal_rplnodes_mcast(&addr);
     uip_icmp6_send(&addr, ICMP6_RPL, RPL_CODE_DIO, pos);
   } else {
     PRINTF("RPL: Sending unicast-DIO with rank %u to ",
-        (unsigned)instance->current_dag->rank);
+           (unsigned)instance->current_dag->rank);
     PRINT6ADDR(uc_addr);
     PRINTF("\n");
     uip_icmp6_send(uc_addr, ICMP6_RPL, RPL_CODE_DIO, pos);
@@ -904,9 +902,9 @@ dao_input(void)
   uint8_t flags;
   uint8_t subopt_type;
   /*
-  uint8_t pathcontrol;
-  uint8_t pathsequence;
-  */
+     uint8_t pathcontrol;
+     uint8_t pathsequence;
+   */
   uip_ipaddr_t prefix;
   uip_ds6_route_t *rep;
   uint8_t buffer_length;
@@ -923,8 +921,8 @@ dao_input(void)
 
   /* Destination Advertisement Object */
   /*PRINTF("RPL: Received a DAO from ");
-  PRINT6ADDR(&dao_sender_addr);
-  PRINTF("\n");*/
+     PRINT6ADDR(&dao_sender_addr);
+     PRINTF("\n");*/
 
   buffer = UIP_ICMP_PAYLOAD;
   buffer_length = uip_len - uip_l3_icmp_hdr_len;
@@ -987,8 +985,8 @@ dao_input(void)
 
   /*PRINTF("RPL: DAO lifetime: %u, prefix length: %u prefix: ",
           (unsigned)lifetime, (unsigned)prefixlen);
-  PRINT6ADDR(&prefix);
-  PRINTF("\n");*/
+     PRINT6ADDR(&prefix);
+     PRINTF("\n");*/
 
   rep = uip_ds6_route_lookup(&prefix);
 
@@ -1024,10 +1022,10 @@ dao_input(void)
   }
 
   learned_from = uip_is_addr_mcast(&dao_sender_addr) ?
-                 RPL_ROUTE_FROM_MULTICAST_DAO : RPL_ROUTE_FROM_UNICAST_DAO;
+    RPL_ROUTE_FROM_MULTICAST_DAO : RPL_ROUTE_FROM_UNICAST_DAO;
 
   PRINTF("RPL: DAO from %s\n",
-         learned_from == RPL_ROUTE_FROM_UNICAST_DAO? "unicast": "multicast");
+         learned_from == RPL_ROUTE_FROM_UNICAST_DAO ? "unicast" : "multicast");
   if(learned_from == RPL_ROUTE_FROM_UNICAST_DAO) {
     /* Check whether this is a DAO forwarding loop. */
     p = rpl_find_parent(dag, &dao_sender_addr);
@@ -1036,7 +1034,7 @@ dao_input(void)
     if(p != NULL &&
        DAG_RANK(p->rank, instance) < DAG_RANK(dag->rank, instance)) {
       PRINTF("RPL: Loop detected when receiving a unicast DAO from a node with a lower rank! (%u < %u)\n",
-          DAG_RANK(p->rank, instance), DAG_RANK(dag->rank, instance));
+             DAG_RANK(p->rank, instance), DAG_RANK(dag->rank, instance));
       p->rank = INFINITE_RANK;
       p->updated = 1;
       return;
@@ -1177,7 +1175,7 @@ dao_output_target(rpl_parent_t *parent, uip_ipaddr_t *prefix, uint8_t lifetime)
   buffer[pos++] = dao_sequence;
 #if RPL_DAO_SPECIFY_DAG
   memcpy(buffer + pos, &dag->dag_id, sizeof(dag->dag_id));
-  pos+=sizeof(dag->dag_id);
+  pos += sizeof(dag->dag_id);
 #endif /* RPL_DAO_SPECIFY_DAG */
 
   /* create target subopt */
@@ -1206,7 +1204,7 @@ dao_output_target(rpl_parent_t *parent, uip_ipaddr_t *prefix, uint8_t lifetime)
   if(rpl_get_parent_ipaddr(parent) != NULL) {
     uip_icmp6_send(rpl_get_parent_ipaddr(parent), ICMP6_RPL, RPL_CODE_DAO, pos);
   }
-if(mobility_flag && check_dao_ack) {
+  if(mobility_flag && check_dao_ack) {
     ctimer_set(&dao_period, CLOCK_SECOND / 4, rpl_schedule_dao, instance);
   }
   overhead++;
@@ -1230,7 +1228,7 @@ dao_ack_input(void)
   status = buffer[3];
 
   PRINTF("RPL: Received a DAO ACK with sequence number %d and status %d from ",
-    sequence, status);
+         sequence, status);
   PRINT6ADDR(&UIP_IP_BUF->srcipaddr);
   PRINTF("\n");
   if(check_dao_ack == 1) {
@@ -1246,8 +1244,8 @@ dao_ack_output(rpl_instance_t *instance, uip_ipaddr_t *dest, uint8_t sequence)
   unsigned char *buffer;
 
   /*PRINTF("RPL: Sending a DAO ACK with sequence number %d to ", sequence);
-  PRINT6ADDR(dest);
-  PRINTF("\n");*/
+     PRINT6ADDR(dest);
+     PRINTF("\n");*/
 
   buffer = UIP_ICMP_PAYLOAD;
 
@@ -1263,7 +1261,7 @@ void
 uip_rpl_input(void)
 {
   overhead++;
-  printf("Overhead = %u\n", overhead);
+  PRINTF("Overhead = %u\n", overhead);
   /*PRINTF("Received an RPL control message\n"); */
   switch(UIP_ICMP_BUF->icode) {
   case RPL_CODE_DIO:

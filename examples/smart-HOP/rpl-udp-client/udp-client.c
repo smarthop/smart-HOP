@@ -27,7 +27,6 @@
  *
  */
 
-
 #include "contiki.h"
 #include "lib/random.h"
 #include "sys/ctimer.h"
@@ -48,8 +47,7 @@
 #define UDP_CLIENT_PORT 8765
 #define UDP_SERVER_PORT 5678
 #define UDP_EXAMPLE_ID  190
-
-
+#define RSSI_THRESHOLD -90
 
 #define DEBUG DEBUG_PRINT
 #include "net/uip-debug.h"
@@ -57,7 +55,6 @@
 /*#ifndef PERIOD
    #define PERIOD 1
  #endif*/
-#define RSSI_THRESHOLD -90
 
 #define SEND_INTERVAL   (CLOCK_SECOND / 30)
 #define SEND_TIME   0       /*(random_rand()%10)*((SEND_INTERVAL)/2) */
@@ -85,12 +82,11 @@ tcpip_handler(void)
     str[uip_datalen()] = '\0';
     rrssi = strtol(str, &ptr, 10);
     packets = strtol(ptr, &ptr, 10);
-    PRINTF("rssi = %ld, packets = %ld\n", rrssi, packets);
+    /*PRINTF("rssi = %ld, packets = %ld\n", rrssi, packets);*/
     leds_off(LEDS_BLUE);
     if(rrssi <= RSSI_THRESHOLD && mobility_flag == 0
        && hand_off_backoff_flag == 0) {
-    	rpl_unreach();
-      printf("RSSI UNDER -90!!!!!!\n");
+      rpl_unreach();
       test_unreachable = 1;
       process_post(&unreach_process, PARENT_UNREACHABLE, NULL);
       return;

@@ -87,15 +87,14 @@ process_event_t tcpip_icmp6_event;
  */
 static struct etimer periodic, unreach;
 static struct ctimer backoff_timer;
-#define HAND_OFF_BACKOFF CLOCK_SECOND/2
+#define HAND_OFF_BACKOFF CLOCK_SECOND / 2
 uint32_t end_time;
-
 
 /* Specify here the amount of time you want to wait until it's detected that no packets are being received
  * For example: if i'm sending packets every 10ms, i want this timer to be 30-50 ms.
  * This depends on the application or the user requirements. Adjust this value to your needs.
  */
-#define NO_DATA_PERIOD (CLOCK_SECOND/2)
+#define NO_DATA_PERIOD (CLOCK_SECOND / 2)
 
 /* Even if no packets are received. Last RSSI reading must be above this threshold in order
  * for the mobility process to be triggered.
@@ -106,7 +105,7 @@ uint32_t end_time;
  * and even if we receive packets, the unreach timer should not be reseted to avoid multiple/faulty "No packet" detections!
  * DIS/DIO reception also trigger the packet_input() thus the usage of this flag to avoid conflicts within mobility.
  */
-char mobility_flag=0, unreach_flag=0, NO_DATA=0, test_unreachable=0, hand_off_backoff_flag=0;
+char mobility_flag = 0, unreach_flag = 0, NO_DATA = 0, test_unreachable = 0, hand_off_backoff_flag = 0;
 static int packet_rssi;
 rpl_dag_t *dag;
 rpl_instance_t *instance;
@@ -134,7 +133,7 @@ static struct internal_state {
 /* Called on IP packet output. */
 #if UIP_CONF_IPV6
 
-static uint8_t (* outputfunc)(const uip_lladdr_t *a);
+static uint8_t (*outputfunc)(const uip_lladdr_t *a);
 
 uint8_t
 tcpip_output(const uip_lladdr_t *a)
@@ -147,7 +146,6 @@ tcpip_output(const uip_lladdr_t *a)
   UIP_LOG("tcpip_output: Use tcpip_set_outputfunc() to set an output function");
   return 0;
 }
-
 void
 tcpip_set_outputfunc(uint8_t (*f)(const uip_lladdr_t *))
 {
@@ -155,7 +153,7 @@ tcpip_set_outputfunc(uint8_t (*f)(const uip_lladdr_t *))
 }
 #else
 
-static uint8_t (* outputfunc)(void);
+static uint8_t (*outputfunc)(void);
 uint8_t
 tcpip_output(void)
 {
@@ -165,7 +163,6 @@ tcpip_output(void)
   UIP_LOG("tcpip_output: Use tcpip_set_outputfunc() to set an output function");
   return 0;
 }
-
 void
 tcpip_set_outputfunc(uint8_t (*f)(void))
 {
@@ -205,23 +202,23 @@ check_for_tcp_syn(void)
 #endif /* UIP_TCP || UIP_CONF_IP_FORWARD */
 }
 /*---------------------------------------------------------------------------*/
-void hand_off_backoff(void)
+void
+hand_off_backoff(void)
 {
   leds_off(LEDS_RED);
   leds_on(LEDS_GREEN);
-  etimer_set(&unreach,NO_DATA_PERIOD);
-  hand_off_backoff_flag=0;
-  NO_DATA=0;
+  etimer_set(&unreach, NO_DATA_PERIOD);
+  hand_off_backoff_flag = 0;
+  NO_DATA = 0;
 }
-
 /*---------------------------------------------------------------------------*/
 static void
 packet_input(void)
 {
 
 #if MOBILE_NODE
-      etimer_set(&unreach,NO_DATA_PERIOD);
-  packet_rssi=packetbuf_attr(PACKETBUF_ATTR_RSSI)-45;
+  etimer_set(&unreach, NO_DATA_PERIOD);
+  packet_rssi = packetbuf_attr(PACKETBUF_ATTR_RSSI) - 45;
 #endif
 
 #if UIP_CONF_IP_FORWARD
@@ -238,7 +235,7 @@ packet_input(void)
 #if UIP_CONF_IPV6
         tcpip_ipv6_output();
 #else
-	PRINTF("tcpip packet_input forward output len %d\n", uip_len);
+        PRINTF("tcpip packet_input forward output len %d\n", uip_len);
         tcpip_output();
 #endif
 #endif /* UIP_CONF_TCP_SPLIT */
@@ -272,7 +269,7 @@ struct uip_conn *
 tcp_connect(uip_ipaddr_t *ripaddr, uint16_t port, void *appstate)
 {
   struct uip_conn *c;
-  
+
   c = uip_connect(ripaddr, port);
   if(c == NULL) {
     return NULL;
@@ -280,9 +277,9 @@ tcp_connect(uip_ipaddr_t *ripaddr, uint16_t port, void *appstate)
 
   c->appstate.p = PROCESS_CURRENT();
   c->appstate.state = appstate;
-  
+
   tcpip_poll_tcp(c);
-  
+
   return c;
 }
 #endif /* UIP_ACTIVE_OPEN */
@@ -325,7 +322,7 @@ tcp_listen(uint16_t port)
 /*---------------------------------------------------------------------------*/
 void
 tcp_attach(struct uip_conn *conn,
-	   void *appstate)
+           void *appstate)
 {
   uip_tcp_appstate_t *s;
 
@@ -333,13 +330,12 @@ tcp_attach(struct uip_conn *conn,
   s->p = PROCESS_CURRENT();
   s->state = appstate;
 }
-
 #endif /* UIP_TCP */
 /*---------------------------------------------------------------------------*/
 #if UIP_UDP
 void
 udp_attach(struct uip_udp_conn *conn,
-	   void *appstate)
+           void *appstate)
 {
   uip_udp_appstate_t *s;
 
@@ -353,7 +349,7 @@ udp_new(const uip_ipaddr_t *ripaddr, uint16_t port, void *appstate)
 {
   struct uip_udp_conn *c;
   uip_udp_appstate_t *s;
-  
+
   c = uip_udp_new(ripaddr, port);
   if(c == NULL) {
     return NULL;
@@ -375,7 +371,7 @@ udp_broadcast_new(uint16_t port, void *appstate)
 #if UIP_CONF_IPV6
   uip_create_linklocal_allnodes_mcast(&addr);
 #else
-  uip_ipaddr(&addr, 255,255,255,255);
+  uip_ipaddr(&addr, 255, 255, 255, 255);
 #endif /* UIP_CONF_IPV6 */
   conn = udp_new(&addr, port, appstate);
   if(conn != NULL) {
@@ -387,7 +383,8 @@ udp_broadcast_new(uint16_t port, void *appstate)
 /*---------------------------------------------------------------------------*/
 #if UIP_CONF_ICMP6
 uint8_t
-icmp6_new(void *appstate) {
+icmp6_new(void *appstate)
+{
   if(uip_icmp6_conns.appstate.p == PROCESS_NONE) {
     uip_icmp6_conns.appstate.p = PROCESS_CURRENT();
     uip_icmp6_conns.appstate.state = appstate;
@@ -395,7 +392,6 @@ icmp6_new(void *appstate) {
   }
   return 1;
 }
-
 void
 tcpip_icmp6_call(uint8_t type)
 {
@@ -418,186 +414,183 @@ eventhandler(process_event_t ev, process_data_t data)
   struct process *p;
 
   switch(ev) {
-    case PROCESS_EVENT_EXITED:
-      /* This is the event we get if a process has exited. We go through
-         the TCP/IP tables to see if this process had any open
-         connections or listening TCP ports. If so, we'll close those
-         connections. */
+  case PROCESS_EVENT_EXITED:
+    /* This is the event we get if a process has exited. We go through
+       the TCP/IP tables to see if this process had any open
+       connections or listening TCP ports. If so, we'll close those
+       connections. */
 
-      p = (struct process *)data;
+    p = (struct process *)data;
 #if UIP_TCP
-      l = s.listenports;
-      for(i = 0; i < UIP_LISTENPORTS; ++i) {
-        if(l->p == p) {
-          uip_unlisten(l->port);
-          l->port = 0;
-          l->p = PROCESS_NONE;
-        }
-        ++l;
+    l = s.listenports;
+    for(i = 0; i < UIP_LISTENPORTS; ++i) {
+      if(l->p == p) {
+        uip_unlisten(l->port);
+        l->port = 0;
+        l->p = PROCESS_NONE;
       }
-	 
-      {
-        struct uip_conn *cptr;
-	    
-        for(cptr = &uip_conns[0]; cptr < &uip_conns[UIP_CONNS]; ++cptr) {
-          if(cptr->appstate.p == p) {
-            cptr->appstate.p = PROCESS_NONE;
-            cptr->tcpstateflags = UIP_CLOSED;
-          }
+      ++l;
+    }
+
+    {
+      struct uip_conn *cptr;
+
+      for(cptr = &uip_conns[0]; cptr < &uip_conns[UIP_CONNS]; ++cptr) {
+        if(cptr->appstate.p == p) {
+          cptr->appstate.p = PROCESS_NONE;
+          cptr->tcpstateflags = UIP_CLOSED;
         }
       }
+    }
 #endif /* UIP_TCP */
 #if UIP_UDP
-      {
-        struct uip_udp_conn *cptr;
+    {
+      struct uip_udp_conn *cptr;
 
-        for(cptr = &uip_udp_conns[0];
-            cptr < &uip_udp_conns[UIP_UDP_CONNS]; ++cptr) {
-          if(cptr->appstate.p == p) {
-            cptr->lport = 0;
-          }
+      for(cptr = &uip_udp_conns[0];
+          cptr < &uip_udp_conns[UIP_UDP_CONNS]; ++cptr) {
+        if(cptr->appstate.p == p) {
+          cptr->lport = 0;
         }
       }
+    }
 #endif /* UIP_UDP */
-      break;
+    break;
 
-    case PROCESS_EVENT_TIMER:
-      /* We get this event if one of our timers have expired. */
-      {
-        /* Check the clock so see if we should call the periodic uIP
-           processing. */
-        if(data == &periodic &&
-           etimer_expired(&periodic)) {
+  case PROCESS_EVENT_TIMER:
+    /* We get this event if one of our timers have expired. */
+  {
+    /* Check the clock so see if we should call the periodic uIP
+       processing. */
+    if(data == &periodic &&
+       etimer_expired(&periodic)) {
 #if UIP_TCP
-          for(i = 0; i < UIP_CONNS; ++i) {
-            if(uip_conn_active(i)) {
-              /* Only restart the timer if there are active
-                 connections. */
-              etimer_restart(&periodic);
-              uip_periodic(i);
+      for(i = 0; i < UIP_CONNS; ++i) {
+        if(uip_conn_active(i)) {
+          /* Only restart the timer if there are active
+             connections. */
+          etimer_restart(&periodic);
+          uip_periodic(i);
 #if UIP_CONF_IPV6
-              tcpip_ipv6_output();
+          tcpip_ipv6_output();
 #else
-              if(uip_len > 0) {
-		PRINTF("tcpip_output from periodic len %d\n", uip_len);
-                tcpip_output();
-		PRINTF("tcpip_output after periodic len %d\n", uip_len);
-              }
-#endif /* UIP_CONF_IPV6 */
-            }
+          if(uip_len > 0) {
+            PRINTF("tcpip_output from periodic len %d\n", uip_len);
+            tcpip_output();
+            PRINTF("tcpip_output after periodic len %d\n", uip_len);
           }
+#endif /* UIP_CONF_IPV6 */
+        }
+      }
 #endif /* UIP_TCP */
 #if UIP_CONF_IP_FORWARD
-          uip_fw_periodic();
+      uip_fw_periodic();
 #endif /* UIP_CONF_IP_FORWARD */
-        }
-        /*Unreachability detection timer*/
+    }
+    /*Unreachability detection timer*/
 #if MOBILE_NODE
-        if((data == &unreach) && (etimer_expired(&unreach)) && mobility_flag==0 && hand_off_backoff_flag==0){
-          NO_DATA=1;
-        	if(unreach_flag==0){
-        		rpl_unreach();
-        		unreach_flag++;
-        		printf("UNREACH!!!!\n");
-        	}
-        }
+    if((data == &unreach) && (etimer_expired(&unreach)) && mobility_flag == 0 && hand_off_backoff_flag == 0) {
+      NO_DATA = 1;
+      if(unreach_flag == 0) {
+        rpl_unreach();
+        unreach_flag++;
+        printf("UNREACH!!!!\n");
+      }
+    }
 #endif
- /*       if((data == &check_dios) && (etimer_expired(&check_dios))){
-PRINTF("TIMER EXPIRED!\n");
-PRINTF("Flag: %u\n",(unsigned)dio.flags);
-          if(dio.flags==1)
-            PRINTF("DIO RECEIVED!\n");
-        }*/
+    /*       if((data == &check_dios) && (etimer_expired(&check_dios))){
+       PRINTF("TIMER EXPIRED!\n");
+       PRINTF("Flag: %u\n",(unsigned)dio.flags);
+             if(dio.flags==1)
+               PRINTF("DIO RECEIVED!\n");
+           }*/
 
-
-
-        
 #if UIP_CONF_IPV6
 #if UIP_CONF_IPV6_REASSEMBLY
-        /*
-         * check the timer for reassembly
-         */
-        if(data == &uip_reass_timer &&
-           etimer_expired(&uip_reass_timer)) {
-          uip_reass_over();
-          tcpip_ipv6_output();
-        }
+    /*
+     * check the timer for reassembly
+     */
+    if(data == &uip_reass_timer &&
+       etimer_expired(&uip_reass_timer)) {
+      uip_reass_over();
+      tcpip_ipv6_output();
+    }
 #endif /* UIP_CONF_IPV6_REASSEMBLY */
-        /*
-         * check the different timers for neighbor discovery and
-         * stateless autoconfiguration
-         */
-        /*if(data == &uip_ds6_timer_periodic &&
-           etimer_expired(&uip_ds6_timer_periodic)) {
-          uip_ds6_periodic();
-          tcpip_ipv6_output();
-        }*/
+    /*
+     * check the different timers for neighbor discovery and
+     * stateless autoconfiguration
+     */
+    /*if(data == &uip_ds6_timer_periodic &&
+       etimer_expired(&uip_ds6_timer_periodic)) {
+       uip_ds6_periodic();
+       tcpip_ipv6_output();
+       }*/
 #if !UIP_CONF_ROUTER
-        if(data == &uip_ds6_timer_rs &&
-           etimer_expired(&uip_ds6_timer_rs)) {
-          uip_ds6_send_rs();
-          tcpip_ipv6_output();
-        }
+    if(data == &uip_ds6_timer_rs &&
+       etimer_expired(&uip_ds6_timer_rs)) {
+      uip_ds6_send_rs();
+      tcpip_ipv6_output();
+    }
 #endif /* !UIP_CONF_ROUTER */
-        if(data == &uip_ds6_timer_periodic &&
-           etimer_expired(&uip_ds6_timer_periodic)) {
-          uip_ds6_periodic();
-          tcpip_ipv6_output();
-        }
+    if(data == &uip_ds6_timer_periodic &&
+       etimer_expired(&uip_ds6_timer_periodic)) {
+      uip_ds6_periodic();
+      tcpip_ipv6_output();
+    }
 #endif /* UIP_CONF_IPV6 */
-      }
-      break;
-	 
+  }
+  break;
+
 #if UIP_TCP
-    case TCP_POLL:
-      if(data != NULL) {
-        uip_poll_conn(data);
+  case TCP_POLL:
+    if(data != NULL) {
+      uip_poll_conn(data);
 #if UIP_CONF_IPV6
-        tcpip_ipv6_output();
+      tcpip_ipv6_output();
 #else /* UIP_CONF_IPV6 */
-        if(uip_len > 0) {
-	  PRINTF("tcpip_output from tcp poll len %d\n", uip_len);
-          tcpip_output();
-        }
-#endif /* UIP_CONF_IPV6 */
-        /* Start the periodic polling, if it isn't already active. */
-        start_periodic_tcp_timer();
+      if(uip_len > 0) {
+        PRINTF("tcpip_output from tcp poll len %d\n", uip_len);
+        tcpip_output();
       }
-      break;
+#endif /* UIP_CONF_IPV6 */
+      /* Start the periodic polling, if it isn't already active. */
+      start_periodic_tcp_timer();
+    }
+    break;
 #endif /* UIP_TCP */
 #if UIP_UDP
-    case UDP_POLL:
-      if(data != NULL) {
-        uip_udp_periodic_conn(data);
+  case UDP_POLL:
+    if(data != NULL) {
+      uip_udp_periodic_conn(data);
 #if UIP_CONF_IPV6
-        tcpip_ipv6_output();
+      tcpip_ipv6_output();
 #else
-        if(uip_len > 0) {
-          tcpip_output();
-        }
-#endif /* UIP_UDP */
+      if(uip_len > 0) {
+        tcpip_output();
       }
-      break;
+#endif /* UIP_UDP */
+    }
+    break;
 #endif /* UIP_UDP */
 
-    case PACKET_INPUT:
-      packet_input();
-      break;
+  case PACKET_INPUT:
+    packet_input();
+    break;
 
-    case RESET_MOBILITY_FLAG:
-      end_time=clock_time()*1000/CLOCK_SECOND;
-      printf("%u\n",end_time);
-      hand_off_backoff_flag=1;
-      mobility_flag=0;
-      etimer_reset(&unreach);
-      NO_DATA=0;
-      ctimer_set(&backoff_timer, HAND_OFF_BACKOFF, hand_off_backoff, NULL);
-        test_unreachable=0;
-        leds_off(LEDS_ALL);
-        leds_on(LEDS_RED);
-        etimer_reset(&unreach);
-          break;
-  };
+  case RESET_MOBILITY_FLAG:
+    end_time = clock_time() * 1000 / CLOCK_SECOND;
+    printf("%u\n", end_time);
+    hand_off_backoff_flag = 1;
+    mobility_flag = 0;
+    etimer_reset(&unreach);
+    NO_DATA = 0;
+    ctimer_set(&backoff_timer, HAND_OFF_BACKOFF, hand_off_backoff, NULL);
+    test_unreachable = 0;
+    leds_off(LEDS_ALL);
+    leds_on(LEDS_RED);
+    etimer_reset(&unreach);
+    break;
+  }
 }
 /*---------------------------------------------------------------------------*/
 void
@@ -627,7 +620,7 @@ tcpip_ipv6_output(void)
     return;
   }
 
-  if(uip_is_addr_unspecified(&UIP_IP_BUF->destipaddr)){
+  if(uip_is_addr_unspecified(&UIP_IP_BUF->destipaddr)) {
     UIP_LOG("tcpip_ipv6_output: Destination address unspecified");
     uip_len = 0;
     return;
@@ -640,7 +633,7 @@ tcpip_ipv6_output(void)
     /* We first check if the destination address is on our immediate
        link. If so, we simply use the destination address as our
        nexthop address. */
-    if(uip_ds6_is_addr_onlink(&UIP_IP_BUF->destipaddr)){
+    if(uip_ds6_is_addr_onlink(&UIP_IP_BUF->destipaddr)) {
       nexthop = &UIP_IP_BUF->destipaddr;
     } else {
       uip_ds6_route_t *route;
@@ -653,23 +646,22 @@ tcpip_ipv6_output(void)
         nexthop = uip_ds6_defrt_choose();
         if(nexthop == NULL) {
 #ifdef UIP_FALLBACK_INTERFACE
-	  PRINTF("FALLBACK: removing ext hdrs & setting proto %d %d\n", 
-		 uip_ext_len, *((uint8_t *)UIP_IP_BUF + 40));
-	  if(uip_ext_len > 0) {
-	    extern void remove_ext_hdr(void);
-	    uint8_t proto = *((uint8_t *)UIP_IP_BUF + 40);
-	    remove_ext_hdr();
-	    /* This should be copied from the ext header... */
-	    UIP_IP_BUF->proto = proto;
-	  }
-	  UIP_FALLBACK_INTERFACE.output();
+          PRINTF("FALLBACK: removing ext hdrs & setting proto %d %d\n",
+                 uip_ext_len, *((uint8_t *)UIP_IP_BUF + 40));
+          if(uip_ext_len > 0) {
+            extern void remove_ext_hdr(void);
+            uint8_t proto = *((uint8_t *)UIP_IP_BUF + 40);
+            remove_ext_hdr();
+            /* This should be copied from the ext header... */
+            UIP_IP_BUF->proto = proto;
+          }
+          UIP_FALLBACK_INTERFACE.output();
 #else
           PRINTF("tcpip_ipv6_output: Destination off-link but no route\n");
 #endif /* !UIP_FALLBACK_INTERFACE */
           uip_len = 0;
           return;
         }
-
       } else {
         /* A route was found, so we look up the nexthop neighbor for
            the route. */
@@ -736,13 +728,13 @@ tcpip_ipv6_output(void)
           uip_packetqueue_set_buflen(&nbr->packethandle, uip_len);
         }
 #endif
-      /* RFC4861, 7.2.2:
-       * "If the source address of the packet prompting the solicitation is the
-       * same as one of the addresses assigned to the outgoing interface, that
-       * address SHOULD be placed in the IP Source Address of the outgoing
-       * solicitation.  Otherwise, any one of the addresses assigned to the
-       * interface should be used."*/
-       if(uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
+        /* RFC4861, 7.2.2:
+         * "If the source address of the packet prompting the solicitation is the
+         * same as one of the addresses assigned to the outgoing interface, that
+         * address SHOULD be placed in the IP Source Address of the outgoing
+         * solicitation.  Otherwise, any one of the addresses assigned to the
+         * interface should be used."*/
+        if(uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)) {
           uip_nd6_ns_output(&UIP_IP_BUF->srcipaddr, NULL, &nbr->ipaddr);
         } else {
           uip_nd6_ns_output(NULL, NULL, &nbr->ipaddr);
@@ -826,7 +818,7 @@ void
 tcpip_uipcall(void)
 {
   uip_udp_appstate_t *ts;
-  
+
 #if UIP_UDP
   if(uip_conn != NULL) {
     ts = &uip_conn->appstate;
@@ -838,30 +830,30 @@ tcpip_uipcall(void)
 #endif /* UIP_UDP */
 
 #if UIP_TCP
- {
-   static unsigned char i;
-   struct listenport *l;
-   
-   /* If this is a connection request for a listening port, we must
-      mark the connection with the right process ID. */
-   if(uip_connected()) {
-     l = &s.listenports[0];
-     for(i = 0; i < UIP_LISTENPORTS; ++i) {
-       if(l->port == uip_conn->lport &&
-	  l->p != PROCESS_NONE) {
-	 ts->p = l->p;
-	 ts->state = NULL;
-	 break;
-       }
-       ++l;
-     }
-     
-     /* Start the periodic polling, if it isn't already active. */
-     start_periodic_tcp_timer();
-   }
- }
+  {
+    static unsigned char i;
+    struct listenport *l;
+
+    /* If this is a connection request for a listening port, we must
+       mark the connection with the right process ID. */
+    if(uip_connected()) {
+      l = &s.listenports[0];
+      for(i = 0; i < UIP_LISTENPORTS; ++i) {
+        if(l->port == uip_conn->lport &&
+           l->p != PROCESS_NONE) {
+          ts->p = l->p;
+          ts->state = NULL;
+          break;
+        }
+        ++l;
+      }
+
+      /* Start the periodic polling, if it isn't already active. */
+      start_periodic_tcp_timer();
+    }
+  }
 #endif /* UIP_TCP */
-  
+
   if(ts->p != NULL) {
     process_post_synch(ts->p, tcpip_event, ts->state);
   }
@@ -870,16 +862,16 @@ tcpip_uipcall(void)
 PROCESS_THREAD(tcpip_process, ev, data)
 {
   PROCESS_BEGIN();
-  
+
 #if UIP_TCP
- {
-   static unsigned char i;
-   
-   for(i = 0; i < UIP_LISTENPORTS; ++i) {
-     s.listenports[i].port = 0;
-   }
-   s.p = PROCESS_CURRENT();
- }
+  {
+    static unsigned char i;
+
+    for(i = 0; i < UIP_LISTENPORTS; ++i) {
+      s.listenports[i].port = 0;
+    }
+    s.p = PROCESS_CURRENT();
+  }
 #endif
 
   tcpip_event = process_alloc_event();
@@ -901,7 +893,7 @@ PROCESS_THREAD(tcpip_process, ev, data)
     PROCESS_YIELD();
     eventhandler(ev, data);
   }
-  
+
   PROCESS_END();
 }
 /*---------------------------------------------------------------------------*/
