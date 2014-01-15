@@ -70,15 +70,16 @@ eventhandler(process_event_t ev, process_data_t data)
 
   case PARENT_UNREACHABLE:
     {
-    	printf("parent unreachable..unable get best parent\n");
       instance = &instance_table[0];
       dag = instance->current_dag;
       /*find a different method of differentiation */
 
       for(p = nbr_table_head(rpl_parents);p != NULL;p = nbr_table_next(rpl_parents, p))
       {
-    	  printf("inside the loop FOR\n");
-        if(p == dag->preferred_parent && test_unreachable == 1
+    	  PRINT6ADDR(rpl_get_parent_ipaddr(p));
+    	  printf("test_unreach = %d \n hand-off-backoff = %d\n",test_unreachable, hand_off_backoff_flag);
+
+    	  if(p == dag->preferred_parent && test_unreachable == 1
            && hand_off_backoff_flag == 0) {
           printf("Connection unstable\n");
           pref = rpl_get_parent_ipaddr(p);
