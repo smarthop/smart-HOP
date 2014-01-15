@@ -27,14 +27,12 @@
  *
  */
 
-
-
 #include "contiki.h"
 #include "contiki-lib.h"
 #include "contiki-net.h"
 #include "net/uip.h"
 #include "net/rpl/rpl.h"
-#include "dev/cc2420.h"
+
 #include "net/netstack.h"
 #include "dev/button-sensor.h"
 #include <stdio.h>
@@ -47,15 +45,12 @@
 
 #define UIP_IP_BUF   ((struct uip_ip_hdr *)&uip_buf[UIP_LLH_LEN])
 
-#define UDP_CLIENT_PORT 8765
-#define UDP_SERVER_PORT 5678
+#define UDP_CLIENT_PORT	8765
+#define UDP_SERVER_PORT	5678
 
 #define UDP_EXAMPLE_ID  190
 
-
 static struct uip_udp_conn *server_conn;
-int rssi_rec=0, rssi_packets=0;
-unsigned int packets;
 
 PROCESS(udp_server_process, "UDP server process");
 AUTOSTART_PROCESSES(&udp_server_process);
@@ -65,27 +60,19 @@ tcpip_handler(void)
 {
   char *appdata;
 
-  char buf[10];
-
   if(uip_newdata()) {
-	  packets++;
-	  rssi_packets++;
-    rssi_rec+=packetbuf_attr(PACKETBUF_ATTR_RSSI)-45;
     appdata = (char *)uip_appdata;
     appdata[uip_datalen()] = 0;
     PRINTF("DATA recv '%s' from ", appdata);
     PRINTF("%d",
            UIP_IP_BUF->srcipaddr.u8[sizeof(UIP_IP_BUF->srcipaddr.u8) - 1]);
     PRINTF("\n");
-    if(rssi_packets==3){
-    	sprintf(buf, "%d %u", rssi_rec/rssi_packets, packets);
-		/*PRINTF("RSSI: %d, %d\n",rssi/rssi_packets, packets);*/
-		uip_ipaddr_copy(&server_conn->ripaddr, &UIP_IP_BUF->srcipaddr);
-		uip_udp_packet_send(server_conn, buf, strlen(buf));
-		uip_create_unspecified(&server_conn->ripaddr);
-		rssi_packets = 0;
-		rssi_rec=0;
-    }
+#if SERVER_REPLY
+    PRINTF("DATA sending reply\n");
+    uip_ipaddr_copy(&server_conn->ripaddr, &UIP_IP_BUF->srcipaddr);
+    uip_udp_packet_send(server_conn, "Reply", sizeof("Reply"));
+    uip_create_unspecified(&server_conn->ripaddr);
+#endif
   }
 }
 /*---------------------------------------------------------------------------*/
@@ -102,8 +89,8 @@ print_local_addresses(void)
       PRINT6ADDR(&uip_ds6_if.addr_list[i].ipaddr);
       PRINTF("\n");
       /* hack to make address "final" */
-      if(state == ADDR_TENTATIVE) {
-        uip_ds6_if.addr_list[i].state = ADDR_PREFERRED;
+      if (state == ADDR_TENTATIVE) {
+	uip_ds6_if.addr_list[i].state = ADDR_PREFERRED;
       }
     }
   }
@@ -131,10 +118,10 @@ PROCESS_THREAD(udp_server_process, ev, data)
  * (Setting Context 0 to aaaa::1111:2222:3333:4444 will report a 16 bit compressed address of aaaa::1111:22ff:fe33:xxxx)
  * Note Wireshark's IPCMV6 checksum verification depends on the correct uncompressed addresses.
  */
-
+ 
 #if 0
 /* Mode 1 - 64 bits inline */
-  uip_ip6addr(&ipaddr, 0xaaaa, 0, 0, 0, 0, 0, 0, 1);
+   uip_ip6addr(&ipaddr, 0xaaaa, 0, 0, 0, 0, 0, 0, 1);
 #elif 1
 /* Mode 2 - 16 bits inline */
   uip_ip6addr(&ipaddr, 0xaaaa, 0, 0, 0, 0, 0x00ff, 0xfe00, 1);
@@ -148,8 +135,7 @@ PROCESS_THREAD(udp_server_process, ev, data)
   root_if = uip_ds6_addr_lookup(&ipaddr);
   if(root_if != NULL) {
     rpl_dag_t *dag;
-
-    dag = rpl_set_root(RPL_DEFAULT_INSTANCE, (uip_ip6addr_t *) & ipaddr);
+    dag = rpl_set_root(RPL_DEFAULT_INSTANCE,(uip_ip6addr_t *)&ipaddr);
     uip_ip6addr(&ipaddr, 0xaaaa, 0, 0, 0, 0, 0, 0, 0);
     rpl_set_prefix(dag, &ipaddr, 64);
     PRINTF("created a new RPL dag\n");
@@ -157,10 +143,10 @@ PROCESS_THREAD(udp_server_process, ev, data)
     PRINTF("failed to create a new RPL DAG\n");
   }
 #endif /* UIP_CONF_ROUTER */
-
+  
   print_local_addresses();
-  cc2420_set_txpower(3);
-  /* The data sink runs with a 100% duty cycle in order to ensure high
+
+  /* The data sink runs with a 100% duty cycle in order to ensure high 
      packet reception rates. */
   NETSTACK_MAC.off(1);
 
@@ -180,7 +166,7 @@ PROCESS_THREAD(udp_server_process, ev, data)
     PROCESS_YIELD();
     if(ev == tcpip_event) {
       tcpip_handler();
-    } else if(ev == sensors_event && data == &button_sensor) {
+    } else if (ev == sensors_event && data == &button_sensor) {
       PRINTF("Initiaing global repair\n");
       rpl_repair_root(RPL_DEFAULT_INSTANCE);
     }

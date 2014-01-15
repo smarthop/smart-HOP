@@ -1,9 +1,10 @@
-CFLAGS += -DPROJECT_CONF_H=\"project-conf.h\"
 all: udp-client udp-server
 APPS=servreg-hack
 CONTIKI=../../..
+
 UIP_CONF_IPV6=1
 
+CFLAGS+= -DUIP_CONF_IPV6_RPL
 
 ifdef WITH_COMPOWER
 APPS+=powertrace
@@ -16,8 +17,5 @@ endif
 ifdef PERIOD
 CFLAGS+=-DPERIOD=$(PERIOD)
 endif
-
-CFLAGS+= -DUIP_CONF_IPV6_RPL -ffunction-sections
-LDFLAGS += -Wl,--gc-sections,--undefined=_reset_vector__,--undefined=InterruptVectors,--undefined=_copy_data_init__,--undefined=_clear_bss_init__,--undefined=_end_of_init__
 
 include $(CONTIKI)/Makefile.include

@@ -41,6 +41,7 @@
  * Contributors: Niclas Finne <nfi@sics.se>, Joel Hoglund <joel@sics.se>,
  *               Mathieu Pouillot <m.pouillot@watteco.com>
  */
+
 #include "net/tcpip.h"
 #include "net/uip.h"
 #include "net/uip-ds6.h"
@@ -48,10 +49,9 @@
 #include "net/uip-icmp6.h"
 #include "net/rpl/rpl-private.h"
 #include "net/packetbuf.h"
-#include "net/tcpip.h"
+
 #include <limits.h>
 #include <string.h>
-#include <stdlib.h>
 
 #define DEBUG DEBUG_NONE
 
@@ -85,13 +85,18 @@ void RPL_DEBUG_DAO_OUTPUT(rpl_parent_t *);
 static uint8_t dao_sequence = RPL_LOLLIPOP_INIT;
 
 extern rpl_of_t RPL_OF;
+/*
+ * ###################
+ * smart-HOP START
+ * ###################
+ */
+
 rpl_instance_t *process_instance;
 static uint8_t dis_rssi, buf1, rssi_average;
 char first_dio = 0;
 static int j, true_rssi, true_rssi_average;
 static uip_ipaddr_t possible_parent_addr[5];
 static uint16_t possible_parent_rssi[5];
-static uint16_t possible_parent_pos[5];
 rpl_dio_t dios[5];
 uip_ipaddr_t *dio_addr;
 char process_dis_input = 0;
@@ -107,12 +112,16 @@ static struct etimer dios_input;
 struct ctimer dao_period;
 int k;
 
-/*char check_dao_ack=0;*/
 uint16_t best_parent_rssi;
 uip_ipaddr_t best_parent_addr;
 rpl_dio_t best_parent_dio;
 rpl_parent_t *p;
 int t;
+/*
+ * ###################
+ * smart-HOP END
+ * ###################
+ */
 
 /*---------------------------------------------------------------------------*/
 static int
@@ -168,21 +177,37 @@ dis_input(void)
 {
   rpl_instance_t *instance;
   rpl_instance_t *end;
+/*
+ * ###################
+ * smart-HOP START
+ * ###################
+ */
   unsigned char *buffer;
   rpl_parent_t *p;
   rpl_dag_t *dag;
+/*
+ * ###################
+ * smart-HOP END
+ * ###################
+ */
 
   /* DAG Information Solicitation */
   PRINTF("RPL: Received a DIS from ");
   PRINT6ADDR(&UIP_IP_BUF->srcipaddr);
   PRINTF("\n");
-
-  /*PRINTF("RPL: Received a DIS from ");
-     PRINT6ADDR(&UIP_IP_BUF->srcipaddr);
-     PRINTF("\n"); */
+/*
+ * ###################
+ * smart-HOP START
+ * ###################
+ */
   dio_addr = (&UIP_IP_BUF->srcipaddr);
   buffer = UIP_ICMP_PAYLOAD;
   dis_rssi = packetbuf_attr(PACKETBUF_ATTR_RSSI);
+/*
+ * ###################
+ * smart-HOP END
+ * ###################
+ */
   for(instance = &instance_table[0], end = instance + RPL_MAX_INSTANCES;
       instance < end; ++instance) {
     if(instance->used == 1) {
@@ -193,8 +218,11 @@ dis_input(void)
         PRINTF("RPL: LEAF ONLY Multicast DIS will NOT reset DIO timer\n");
 #else /* !RPL_LEAF_ONLY */
       if(uip_is_addr_mcast(&UIP_IP_BUF->destipaddr)) {
-        /* A flag was introduced to distinguish normal multicast DIS from those triggered by the mobility process.
-         */
+/*
+ * ###################
+ * smart-HOP START
+ * ###################
+ */
 #if !MOBILE_NODE
         if(buffer[0] == 1) {
           /*Loop avoidance */
@@ -241,6 +269,7 @@ dis_input(void)
     }
   }
 }
+
 void
 eventhandler2(process_event_t ev, process_data_t data)
 {
@@ -288,7 +317,11 @@ PROCESS_THREAD(multiple_dis_input, ev, data)
 
   PROCESS_END();
 }
-
+/*
+ * ###################
+ * smart-HOP END
+ * ###################
+ */
 /*---------------------------------------------------------------------------*/
 void
 dis_output(uip_ipaddr_t * addr, uint8_t flags, uint8_t counter)
@@ -305,9 +338,6 @@ dis_output(uip_ipaddr_t * addr, uint8_t flags, uint8_t counter)
   /*     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ */
 
   buffer = UIP_ICMP_PAYLOAD;
-  /* Instead of following the specification, which states that this should be 0.
-   * The flag was implemented to distinguish normal DIS messages, from those triggered by the mobility process.
-   */
   buffer[0] = flags;
   buffer[1] = counter;
 
@@ -315,15 +345,17 @@ dis_output(uip_ipaddr_t * addr, uint8_t flags, uint8_t counter)
     uip_create_linklocal_rplnodes_mcast(&tmpaddr);
     addr = &tmpaddr;
   }
-  /*if(flags!=0)
-     printf("Sending dis, flags = %d, counter = %d\n",flags,counter); */
 
-  /*PRINTF("RPL: Sending a DIS to ");
+  PRINTF("RPL: Sending a DIS to ");
      PRINT6ADDR(addr);
-     PRINTF("\n"); */
+     PRINTF("\n");
 
   uip_icmp6_send(addr, ICMP6_RPL, RPL_CODE_DIS, 2);
-  overhead++;
+/*
+ * ###################
+ * smart-HOP START
+ * ###################
+ */
   if(addr == &tmpaddr && flags == 1 && counter == 3) {
     if(process_start_wait_dios == 0) {
       process_start(&wait_dios, NULL);
@@ -333,6 +365,11 @@ dis_output(uip_ipaddr_t * addr, uint8_t flags, uint8_t counter)
       process_post_synch(&wait_dios, RESET_DIOS_INPUT, NULL);
     }
   }
+/*
+ * ###################
+ * smart-HOP END
+ * ###################
+ */
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -341,14 +378,23 @@ dio_input(void)
   unsigned char *buffer;
   uint8_t buffer_length;
   rpl_dio_t dio;
-  rpl_instance_t *instance = &instance_table[0];
-  rpl_dag_t *dag = instance->current_dag;
   uint8_t subopt_type;
   int i;
   int len;
   uip_ipaddr_t from;
   uip_ds6_nbr_t *nbr;
-
+/*
+ * ###################
+ * smart-HOP START
+ * ###################
+ */
+  rpl_instance_t *instance = &instance_table[0];
+  rpl_dag_t *dag = instance->current_dag;
+/*
+ * ###################
+ * smart-HOP END
+ * ###################
+ */
   memset(&dio, 0, sizeof(dio));
 
   /* Set default values in case the DIO configuration option is missing. */
@@ -410,7 +456,11 @@ dio_input(void)
   dio.grounded = buffer[i] & RPL_DIO_GROUNDED;
   dio.mop = (buffer[i] & RPL_DIO_MOP_MASK) >> RPL_DIO_MOP_SHIFT;
   dio.preference = buffer[i++] & RPL_DIO_PREFERENCE_MASK;
-
+/*
+ * ###################
+ * smart-HOP START
+ * ###################
+ */
   /*0                   1                   2                   3
      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -440,6 +490,11 @@ dio_input(void)
   dio.rssi = buffer[i++];
   /* one reserved byte */
   /*i += 1; */
+/*
+ * ###################
+ * smart-HOP END
+ * ###################
+ */
 
   memcpy(&dio.dag_id, buffer + i, sizeof(dio.dag_id));
   i += sizeof(dio.dag_id);
@@ -570,7 +625,11 @@ dio_input(void)
 #ifdef RPL_DEBUG_DIO_INPUT
   RPL_DEBUG_DIO_INPUT(&from, &dio);
 #endif
-
+/*
+ * ###################
+ * smart-HOP START
+ * ###################
+ */
 #if MOBILE_NODE
   if(dio.flags == 1 && mobility_flag == 1) {
     process_post_synch(&unreach_process, STOP_DIO_CHECK, NULL);
@@ -729,17 +788,19 @@ PROCESS_THREAD(wait_dios, ev, data)
   }
   PROCESS_END();
 }
-
+/*
+ * ###################
+ * smart-HOP END
+ * ###################
+ */
 /*---------------------------------------------------------------------------*/
-/* uint8_t flags added */
 void
 dio_output(rpl_instance_t * instance, uip_ipaddr_t * uc_addr, uint8_t flags)
 {
   unsigned char *buffer;
   int pos;
-  uint8_t output_rssi;
   rpl_dag_t *dag = instance->current_dag;
-
+  uint8_t output_rssi; //smart-HOP
 #if !RPL_LEAF_ONLY
   uip_ipaddr_t addr;
 #endif /* !RPL_LEAF_ONLY */
@@ -783,6 +844,11 @@ dio_output(rpl_instance_t * instance, uip_ipaddr_t * uc_addr, uint8_t flags)
   RPL_LOLLIPOP_INCREMENT(instance->dtsn_out);
 
   /* reserved 2 bytes */
+/*
+ * ###################
+ * smart-HOP START
+ * ###################
+ */
   buffer[pos++] = flags;        /* flags */
   output_rssi = rssi_average;
   if(flags == 1) {
@@ -791,7 +857,11 @@ dio_output(rpl_instance_t * instance, uip_ipaddr_t * uc_addr, uint8_t flags)
     buffer[pos++] = output_rssi;        /* reserved */
   }
   rssi_average = 0;
-
+/*
+ * ###################
+ * smart-HOP END
+ * ###################
+ */
   memcpy(buffer + pos, &dag->dag_id, sizeof(dag->dag_id));
   pos += 16;
 
@@ -884,7 +954,6 @@ dio_output(rpl_instance_t * instance, uip_ipaddr_t * uc_addr, uint8_t flags)
     PRINT6ADDR(uc_addr);
     PRINTF("\n");
     uip_icmp6_send(uc_addr, ICMP6_RPL, RPL_CODE_DIO, pos);
-    overhead++;
   }
 #endif /* RPL_LEAF_ONLY */
 }
@@ -902,7 +971,6 @@ dao_input(void)
   uint8_t prefixlen;
   uint8_t flags;
   uint8_t subopt_type;
-
   /*
      uint8_t pathcontrol;
      uint8_t pathsequence;
@@ -1212,10 +1280,19 @@ dao_output_target(rpl_parent_t * parent, uip_ipaddr_t * prefix,
     uip_icmp6_send(rpl_get_parent_ipaddr(parent), ICMP6_RPL, RPL_CODE_DAO,
                    pos);
   }
+/*
+ * ###################
+ * smart-HOP START
+ * ###################
+ */
   if(mobility_flag && check_dao_ack) {
     ctimer_set(&dao_period, CLOCK_SECOND / 4, rpl_schedule_dao, instance);
   }
-  overhead++;
+/*
+ * ###################
+ * smart-HOP END
+ * ###################
+ */
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -1240,10 +1317,20 @@ dao_ack_input(void)
      sequence, status);
   PRINT6ADDR(&UIP_IP_BUF->srcipaddr);
   PRINTF("\n");
+/*
+ * ###################
+ * smart-HOP START
+ * ###################
+ */
   if(check_dao_ack == 1) {
     check_dao_ack = 0;
     ctimer_stop(&dao_period);
   }
+/*
+ * ###################
+ * smart-HOP END
+ * ###################
+ */
 #endif /* DEBUG */
 }
 /*---------------------------------------------------------------------------*/
@@ -1270,9 +1357,7 @@ dao_ack_output(rpl_instance_t * instance, uip_ipaddr_t * dest,
 void
 uip_rpl_input(void)
 {
-  overhead++;
-  PRINTF("Overhead = %u\n", overhead);
-  /*PRINTF("Received an RPL control message\n"); */
+  PRINTF("Received an RPL control message\n"); 
   switch (UIP_ICMP_BUF->icode) {
   case RPL_CODE_DIO:
     dio_input();

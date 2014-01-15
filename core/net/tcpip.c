@@ -41,14 +41,24 @@
 #include "contiki-net.h"
 #include "net/uip-split.h"
 #include "net/uip-packetqueue.h"
-#include "net/rpl/rpl-private.h"
-#include "dev/leds.h"
 #if UIP_CONF_IPV6
 #include "net/uip-nd6.h"
 #include "net/uip-ds6.h"
 #include "net/uip.h"
 #endif
+/*
+ * ###################
+ * smart-HOP START
+ * ###################
+ */
+#include "net/rpl/rpl-private.h"
+#include "dev/leds.h"
 #include "sys/clock.h"
+/*
+ * ###################
+ * smart-HOP END
+ * ###################
+ */
 #include <string.h>
 
 #define DEBUG DEBUG_NONE
@@ -79,13 +89,18 @@ process_event_t tcpip_event;
 process_event_t tcpip_icmp6_event;
 #endif /* UIP_CONF_ICMP6 */
 
-/*static uip_ip6addr_t tmp_ipaddr;*/
-/* Periodic check of active connections. */
 
+/* Periodic check of active connections. */
+static struct etimer periodic;
+/*
+ * ###################
+ * smart-HOP START
+ * ###################
+ */
 /* unreach:
  * This timer is restarted once a packet is received. If timer expires, means no DATA input was detected.
  */
-static struct etimer periodic, unreach;
+static struct etimer unreach;
 static struct ctimer backoff_timer;
 #define HAND_OFF_BACKOFF CLOCK_SECOND / 2
 uint32_t end_time;
@@ -109,7 +124,11 @@ char mobility_flag = 0, unreach_flag = 0, NO_DATA = 0, test_unreachable = 0, han
 static int packet_rssi;
 rpl_dag_t *dag;
 rpl_instance_t *instance;
-
+/*
+ * ###################
+ * smart-HOP END
+ * ###################
+ */
 #if UIP_CONF_IPV6 && UIP_CONF_IPV6_REASSEMBLY
 /* Timer for reassembly. */
 extern struct etimer uip_reass_timer;
@@ -202,6 +221,11 @@ check_for_tcp_syn(void)
 #endif /* UIP_TCP || UIP_CONF_IP_FORWARD */
 }
 /*---------------------------------------------------------------------------*/
+/*
+ * ###################
+ * smart-HOP START
+ * ###################
+ */
 void
 hand_off_backoff(void)
 {
@@ -220,7 +244,11 @@ packet_input(void)
   etimer_set(&unreach, NO_DATA_PERIOD);
   packet_rssi = packetbuf_attr(PACKETBUF_ATTR_RSSI) - 45;
 #endif
-
+/*
+ * ###################
+ * smart-HOP END
+ * ###################
+ */
 #if UIP_CONF_IP_FORWARD
   if(uip_len > 0) {
     tcpip_is_forwarding = 1;
@@ -487,6 +515,11 @@ eventhandler(process_event_t ev, process_data_t data)
       uip_fw_periodic();
 #endif /* UIP_CONF_IP_FORWARD */
     }
+/*
+ * ###################
+ * smart-HOP START
+ * ###################
+ */
     /*Unreachability detection timer*/
 #if MOBILE_NODE
     if((data == &unreach) && (etimer_expired(&unreach)) && mobility_flag == 0 && hand_off_backoff_flag == 0) {
@@ -504,7 +537,11 @@ eventhandler(process_event_t ev, process_data_t data)
              if(dio.flags==1)
                PRINTF("DIO RECEIVED!\n");
            }*/
-
+/*
+ * ###################
+ * smart-HOP STOP
+ * ###################
+ */
 #if UIP_CONF_IPV6
 #if UIP_CONF_IPV6_REASSEMBLY
     /*
@@ -576,7 +613,11 @@ eventhandler(process_event_t ev, process_data_t data)
   case PACKET_INPUT:
     packet_input();
     break;
-
+/*
+ * ###################
+ * smart-HOP START
+ * ###################
+ */
   case RESET_MOBILITY_FLAG:
     end_time = clock_time() * 1000 / CLOCK_SECOND;
     printf("%u\n", end_time);
@@ -591,6 +632,11 @@ eventhandler(process_event_t ev, process_data_t data)
     etimer_reset(&unreach);
     break;
   }
+/*
+ * ###################
+ * smart-HOP END
+ * ###################
+ */
 }
 /*---------------------------------------------------------------------------*/
 void
@@ -662,6 +708,7 @@ tcpip_ipv6_output(void)
           uip_len = 0;
           return;
         }
+
       } else {
         /* A route was found, so we look up the nexthop neighbor for
            the route. */

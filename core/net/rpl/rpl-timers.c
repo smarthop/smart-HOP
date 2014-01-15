@@ -58,7 +58,7 @@ static void handle_dio_timer(void *ptr);
 
 static uint16_t next_dis;
 
-static uip_ipaddr_t *mobile_dio_addr;
+static uip_ipaddr_t *mobile_dio_addr; //smart-HOP added
 
 /* dio_send_ok is true if the node is ready to send DIOs */
 static uint8_t dio_send_ok;
@@ -75,12 +75,17 @@ handle_periodic_timer(void *ptr)
   next_dis++;
   if(rpl_get_any_dag() == NULL && next_dis >= RPL_DIS_INTERVAL) {
     next_dis = 0;
-    dis_output(NULL, 0, 0);
+    dis_output(NULL, 0, 0); //smart-HOP edited
   }
 #endif
   ctimer_reset(&periodic_timer);
 }
 /************************************************************************/
+/*
+ * ###################
+ * smart-HOP START
+ * ###################
+ */
 void
 new_dio_interval(rpl_instance_t * instance, uip_ipaddr_t * dio_addr,
                  uint8_t flag, char priority)
@@ -101,6 +106,11 @@ new_dio_interval(rpl_instance_t * instance, uip_ipaddr_t * dio_addr,
     PRINTF("RPL: Scheduling DIO timer %lu ticks in future\n", time2);
     ctimer_set(&instance->dio_timer, time2, &handle_dio_timer, instance);
   } else {
+/*
+ * ###################
+ * smart-HOP END
+ * ###################
+ */
     /* TODO: too small timer intervals for many cases */
     time = 1UL << instance->dio_intcurrent;
 
@@ -152,12 +162,21 @@ handle_dio_timer(void *ptr)
   instance = (rpl_instance_t *) ptr;
 
   PRINTF("RPL: DIO Timer triggered\n");
+/*
+ * ###################
+ * smart-HOP START
+ * ###################
+ */
   if(instance->dio_reset_flag == 1) {
     dio_output(instance, mobile_dio_addr, 2);
     instance->dio_reset_flag = 0;
     return;
   }
-
+/*
+ * ###################
+ * smart-HOP END
+ * ###################
+ */
   if(!dio_send_ok) {
     if(uip_ds6_get_link_local(ADDR_PREFERRED) != NULL) {
       dio_send_ok = 1;
@@ -176,7 +195,7 @@ handle_dio_timer(void *ptr)
 #if RPL_CONF_STATS
       instance->dio_totsend++;
 #endif /* RPL_CONF_STATS */
-      dio_output(instance, NULL, 0);
+      dio_output(instance, NULL, 0); //smart-HOP edited
     } else {
       PRINTF("RPL: Supressing DIO transmission (%d >= %d)\n",
              instance->dio_counter, instance->dio_redundancy);
@@ -194,7 +213,7 @@ handle_dio_timer(void *ptr)
       PRINTF("RPL: DIO Timer interval doubled %d\n",
              instance->dio_intcurrent);
     }
-    new_dio_interval(instance, NULL, 0, 0);
+    new_dio_interval(instance, NULL, 0, 0); //smart-HOP edited
   }
 }
 /*---------------------------------------------------------------------------*/
@@ -208,26 +227,17 @@ rpl_reset_periodic_timer(void)
 }
 /*---------------------------------------------------------------------------*/
 /* Resets the DIO timer in the instance to its minimal interval. */
-/* The argument uint8_t flag has been added to distinguish a reset of the timer due to multicast DIS
- * or due to the mobility process that requires a smaller DIO interval that doesn't follow Trickle
- */
+
 void
 rpl_reset_dio_timer(rpl_instance_t * instance)
 {
-  /*if flag = 1, we don't want to do any check for the dio_intcurrent or dio_intmin or the DIO might not be sent */
-  /*instance->dio_reset_flag=flag;
-     if(flag==1){
-     new_dio_interval(instance, priority);
-     return;
-     } */
-
 #if !RPL_LEAF_ONLY
   /* Do not reset if we are already on the minimum interval,
      unless forced to do so. */
   if(instance->dio_intcurrent > instance->dio_intmin) {
     instance->dio_counter = 0;
     instance->dio_intcurrent = instance->dio_intmin;
-    new_dio_interval(instance, NULL, 0, 0);
+    new_dio_interval(instance, NULL, 0, 0); //smart-HOP edited
   }
 #if RPL_CONF_STATS
   rpl_stats.resets++;

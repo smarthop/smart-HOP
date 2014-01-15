@@ -40,6 +40,7 @@
  * \author Joakim Eriksson <joakime@sics.se>, Nicolas Tsiftes <nvt@sics.se>
  */
 
+
 #include "contiki.h"
 #include "net/rpl/rpl-private.h"
 #include "net/uip.h"
@@ -48,7 +49,7 @@
 #include "lib/list.h"
 #include "lib/memb.h"
 #include "sys/ctimer.h"
-#include "net/tcpip.h"
+
 #include <limits.h>
 #include <string.h>
 
@@ -1296,7 +1297,12 @@ rpl_process_dio(uip_ipaddr_t * from, rpl_dio_t * dio, int mobility)
          p->rank, -1 /*p->mc.obj.etx */ , p->link_metric,
          instance->mc.obj.etx);
 
-  /* We have allocated a candidate parent; process the DIO further. */
+  /*
+   * #############################################################################
+   * If the DIO being processed came from smart-HOP decision, change default route,
+   * schedule DAO and finish the mobility process.
+   * #############################################################################
+   */
   if(mobility) {
     instance->current_dag->preferred_parent = p;
     rpl_set_default_route(instance, from);
@@ -1318,7 +1324,6 @@ rpl_process_dio(uip_ipaddr_t * from, rpl_dio_t * dio, int mobility)
     }
   }
   /* We don't use route control, so we can have only one official parent. */
-  if(mobility == 0) {
     if(dag->joined && p == dag->preferred_parent) {
       if(should_send_dao(instance, dio, p)) {
         RPL_LOLLIPOP_INCREMENT(instance->dtsn_out);
@@ -1329,7 +1334,6 @@ rpl_process_dio(uip_ipaddr_t * from, rpl_dio_t * dio, int mobility)
       uip_ds6_defrt_add(from,
                         RPL_LIFETIME(instance, instance->default_lifetime));
     }
-  }
   p->dtsn = dio->dtsn;
 }
 /*---------------------------------------------------------------------------*/

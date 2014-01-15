@@ -38,14 +38,16 @@
 #ifndef RPL_CONF_H
 #define RPL_CONF_H
 
+#include "contiki-conf.h"
+
 /* Set to 1 to enable RPL statistics */
 #ifndef RPL_CONF_STATS
 #define RPL_CONF_STATS 0
 #endif /* RPL_CONF_STATS */
 
-/*
+/* 
  * Select routing metric supported at runtime. This must be a valid
- * DAG Metric Container Object Type (see below). Currently, we only
+ * DAG Metric Container Object Type (see below). Currently, we only 
  * support RPL_DAG_MC_ETX and RPL_DAG_MC_ENERGY.
  * When MRHOF (RFC6719) is used with ETX, no metric container must
  * be used; instead the rank carries ETX directly.
