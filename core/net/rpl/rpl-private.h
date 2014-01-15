@@ -66,14 +66,14 @@
   uip_ip6addr((addr), 0xff02, 0, 0, 0, 0, 0, 0, 0x001a)
 /*---------------------------------------------------------------------------*/
 /* RPL message types */
-#define RPL_CODE_DIS                   0x00   /* DAG Information Solicitation */
-#define RPL_CODE_DIO                   0x01   /* DAG Information Option */
-#define RPL_CODE_DAO                   0x02   /* Destination Advertisement Option */
-#define RPL_CODE_DAO_ACK               0x03   /* DAO acknowledgment */
-#define RPL_CODE_SEC_DIS               0x80   /* Secure DIS */
-#define RPL_CODE_SEC_DIO               0x81   /* Secure DIO */
-#define RPL_CODE_SEC_DAO               0x82   /* Secure DAO */
-#define RPL_CODE_SEC_DAO_ACK           0x83   /* Secure DAO ACK */
+#define RPL_CODE_DIS                   0x00     /* DAG Information Solicitation */
+#define RPL_CODE_DIO                   0x01     /* DAG Information Option */
+#define RPL_CODE_DAO                   0x02     /* Destination Advertisement Option */
+#define RPL_CODE_DAO_ACK               0x03     /* DAO acknowledgment */
+#define RPL_CODE_SEC_DIS               0x80     /* Secure DIS */
+#define RPL_CODE_SEC_DIO               0x81     /* Secure DIO */
+#define RPL_CODE_SEC_DAO               0x82     /* Secure DAO */
+#define RPL_CODE_SEC_DAO_ACK           0x83     /* Secure DAO ACK */
 
 /* RPL control message options. */
 #define RPL_OPTION_PAD1                  0
@@ -87,8 +87,8 @@
 #define RPL_OPTION_PREFIX_INFO           8
 #define RPL_OPTION_TARGET_DESC           9
 
-#define RPL_DAO_K_FLAG                   0x80 /* DAO ACK requested */
-#define RPL_DAO_D_FLAG                   0x40 /* DODAG ID present */
+#define RPL_DAO_K_FLAG                   0x80   /* DAO ACK requested */
+#define RPL_DAO_D_FLAG                   0x40   /* DODAG ID present */
 /*---------------------------------------------------------------------------*/
 /* RPL IPv6 extension header option. */
 #define RPL_HDR_OPT_LEN     4
@@ -226,8 +226,8 @@ struct rpl_dio {
   uint8_t version;
   uint8_t instance_id;
   uint8_t dtsn;
-  uint8_t flags; /* added */
-  uint8_t rssi;  /* added */
+  uint8_t flags;                /* added */
+  uint8_t rssi;                 /* added */
   uint8_t dag_intdoubl;
   uint8_t dag_intmin;
   uint8_t dag_redund;
@@ -267,6 +267,7 @@ extern rpl_stats_t rpl_stats;
 
 /*RPL Mobility Process*/
 CCIF extern process_event_t unreach_event;
+
 PROCESS_NAME(unreach_process);
 extern enum {
   PARENT_UNREACHABLE,
@@ -280,22 +281,23 @@ extern enum {
 void rpl_unreach();
 void rpl_dis_burst();
 void rpl_reachable(uint8_t dis_rssi);
+
 /*extern char dis_burst;*/
 /* Instances */
 extern rpl_instance_t instance_table[];
 extern rpl_instance_t *default_instance;
 
 /* ICMPv6 functions for RPL. */
-void dis_output(uip_ipaddr_t *addr, uint8_t flags, uint8_t counter);
-void dio_output(rpl_instance_t *, uip_ipaddr_t *uc_addr, uint8_t flags);
+void dis_output(uip_ipaddr_t * addr, uint8_t flags, uint8_t counter);
+void dio_output(rpl_instance_t *, uip_ipaddr_t * uc_addr, uint8_t flags);
 void dao_output(rpl_parent_t *, uint8_t lifetime);
 void dao_output_target(rpl_parent_t *, uip_ipaddr_t *, uint8_t lifetime);
 void dao_ack_output(rpl_instance_t *, uip_ipaddr_t *, uint8_t);
 
 /* RPL logic functions. */
-void rpl_join_dag(uip_ipaddr_t *from, rpl_dio_t *dio);
-void rpl_join_instance(uip_ipaddr_t *from, rpl_dio_t *dio);
-void rpl_local_repair(rpl_instance_t *instance);
+void rpl_join_dag(uip_ipaddr_t * from, rpl_dio_t * dio);
+void rpl_join_instance(uip_ipaddr_t * from, rpl_dio_t * dio);
+void rpl_local_repair(rpl_instance_t * instance);
 void rpl_process_dio(uip_ipaddr_t *, rpl_dio_t *, int mobility);
 int rpl_process_parent_event(rpl_instance_t *, rpl_parent_t *);
 
@@ -306,25 +308,27 @@ void rpl_free_dag(rpl_dag_t *);
 void rpl_free_instance(rpl_instance_t *);
 
 /* DAG parent management function. */
-rpl_parent_t *rpl_add_parent(rpl_dag_t *, rpl_dio_t *dio, uip_ipaddr_t *);
+rpl_parent_t *rpl_add_parent(rpl_dag_t *, rpl_dio_t * dio, uip_ipaddr_t *);
 rpl_parent_t *rpl_find_parent(rpl_dag_t *, uip_ipaddr_t *);
-rpl_parent_t *rpl_find_parent_any_dag(rpl_instance_t *instance, uip_ipaddr_t *addr);
+rpl_parent_t *rpl_find_parent_any_dag(rpl_instance_t * instance,
+                                      uip_ipaddr_t * addr);
 void rpl_nullify_parent(rpl_parent_t *);
 void rpl_remove_parent(rpl_parent_t *);
-void rpl_move_parent(rpl_dag_t *dag_src, rpl_dag_t *dag_dst, rpl_parent_t *parent);
-rpl_parent_t *rpl_select_parent(rpl_dag_t *dag);
-rpl_dag_t *rpl_select_dag(rpl_instance_t *instance, rpl_parent_t *parent);
+void rpl_move_parent(rpl_dag_t * dag_src, rpl_dag_t * dag_dst,
+                     rpl_parent_t * parent);
+rpl_parent_t *rpl_select_parent(rpl_dag_t * dag);
+rpl_dag_t *rpl_select_dag(rpl_instance_t * instance, rpl_parent_t * parent);
 void rpl_recalculate_ranks(void);
 
 /* RPL routing table functions. */
-void rpl_remove_routes(rpl_dag_t *dag);
-void rpl_remove_routes_by_nexthop(uip_ipaddr_t *nexthop, rpl_dag_t *dag);
-uip_ds6_route_t *rpl_add_route(rpl_dag_t *dag, uip_ipaddr_t *prefix,
-                               int prefix_len, uip_ipaddr_t *next_hop);
+void rpl_remove_routes(rpl_dag_t * dag);
+void rpl_remove_routes_by_nexthop(uip_ipaddr_t * nexthop, rpl_dag_t * dag);
+uip_ds6_route_t *rpl_add_route(rpl_dag_t * dag, uip_ipaddr_t * prefix,
+                               int prefix_len, uip_ipaddr_t * next_hop);
 void rpl_purge_routes(void);
 
 /* Lock a parent in the neighbor cache. */
-void rpl_lock_parent(rpl_parent_t *p);
+void rpl_lock_parent(rpl_parent_t * p);
 
 /* Objective function. */
 rpl_of_t *rpl_find_of(rpl_ocp_t);
@@ -332,11 +336,12 @@ rpl_of_t *rpl_find_of(rpl_ocp_t);
 /* Timer functions. */
 void rpl_schedule_dao(rpl_instance_t *);
 void rpl_schedule_dao_immediately(rpl_instance_t *);
-void rpl_cancel_dao(rpl_instance_t *instance);
+void rpl_cancel_dao(rpl_instance_t * instance);
 
 void rpl_reset_dio_timer(rpl_instance_t *);
 void rpl_reset_periodic_timer(void);
-void new_dio_interval(rpl_instance_t *instance, uip_ipaddr_t *dio_addr, uint8_t flag, char priority);
+void new_dio_interval(rpl_instance_t * instance, uip_ipaddr_t * dio_addr,
+                      uint8_t flag, char priority);
 
 /* Route poisoning. */
 void rpl_poison_routes(rpl_dag_t *, rpl_parent_t *);

@@ -86,29 +86,28 @@ rpl_of_t rpl_mrhof = {
 typedef uint16_t rpl_path_metric_t;
 
 static rpl_path_metric_t
-calculate_path_metric(rpl_parent_t *p)
+calculate_path_metric(rpl_parent_t * p)
 {
   if(p == NULL) {
     return MAX_PATH_COST * RPL_DAG_MC_ETX_DIVISOR;
   }
-
 #if RPL_DAG_MC == RPL_DAG_MC_NONE
-  return p->rank + (uint16_t)p->link_metric;
+  return p->rank + (uint16_t) p->link_metric;
 #elif RPL_DAG_MC == RPL_DAG_MC_ETX
-  return p->mc.obj.etx + (uint16_t)p->link_metric;
+  return p->mc.obj.etx + (uint16_t) p->link_metric;
 #elif RPL_DAG_MC == RPL_DAG_MC_ENERGY
-  return p->mc.obj.energy.energy_est + (uint16_t)p->link_metric;
+  return p->mc.obj.energy.energy_est + (uint16_t) p->link_metric;
 #else
 #error "Unsupported RPL_DAG_MC configured. See rpl.h."
 #endif /* RPL_DAG_MC */
 }
 static void
-reset(rpl_dag_t *sag)
+reset(rpl_dag_t * sag)
 {
   PRINTF("RPL: Reset MRHOF\n");
 }
 static void
-neighbor_link_callback(rpl_parent_t *p, int status, int numtx)
+neighbor_link_callback(rpl_parent_t * p, int status, int numtx)
 {
   uint16_t recorded_etx = p->link_metric;
   uint16_t packet_etx = numtx * RPL_DAG_MC_ETX_DIVISOR;
@@ -120,8 +119,8 @@ neighbor_link_callback(rpl_parent_t *p, int status, int numtx)
       packet_etx = MAX_LINK_METRIC * RPL_DAG_MC_ETX_DIVISOR;
     }
 
-    new_etx = ((uint32_t)recorded_etx * ETX_ALPHA +
-               (uint32_t)packet_etx * (ETX_SCALE - ETX_ALPHA)) / ETX_SCALE;
+    new_etx = ((uint32_t) recorded_etx * ETX_ALPHA +
+               (uint32_t) packet_etx * (ETX_SCALE - ETX_ALPHA)) / ETX_SCALE;
 
     PRINTF("RPL: ETX changed from %u to %u (packet ETX = %u)\n",
            (unsigned)(recorded_etx / RPL_DAG_MC_ETX_DIVISOR),
@@ -131,7 +130,7 @@ neighbor_link_callback(rpl_parent_t *p, int status, int numtx)
   }
 }
 static rpl_rank_t
-calculate_rank(rpl_parent_t *p, rpl_rank_t base_rank)
+calculate_rank(rpl_parent_t * p, rpl_rank_t base_rank)
 {
   rpl_rank_t new_rank;
   rpl_rank_t rank_increase;
@@ -160,7 +159,7 @@ calculate_rank(rpl_parent_t *p, rpl_rank_t base_rank)
   return new_rank;
 }
 static rpl_dag_t *
-best_dag(rpl_dag_t *d1, rpl_dag_t *d2)
+best_dag(rpl_dag_t * d1, rpl_dag_t * d2)
 {
   if(d1->grounded != d2->grounded) {
     return d1->grounded ? d1 : d2;
@@ -173,29 +172,25 @@ best_dag(rpl_dag_t *d1, rpl_dag_t *d2)
   return d1->rank < d2->rank ? d1 : d2;
 }
 static rpl_parent_t *
-best_parent(rpl_parent_t *p1, rpl_parent_t *p2)
+best_parent(rpl_parent_t * p1, rpl_parent_t * p2)
 {
   rpl_dag_t *dag;
   rpl_path_metric_t min_diff;
   rpl_path_metric_t p1_metric;
   rpl_path_metric_t p2_metric;
 
-  dag = p1->dag; /* Both parents are in the same DAG. */
+  dag = p1->dag;                /* Both parents are in the same DAG. */
 
-  min_diff = RPL_DAG_MC_ETX_DIVISOR /
-    PARENT_SWITCH_THRESHOLD_DIV;
+  min_diff = RPL_DAG_MC_ETX_DIVISOR / PARENT_SWITCH_THRESHOLD_DIV;
 
   p1_metric = calculate_path_metric(p1);
   p2_metric = calculate_path_metric(p2);
 
   /* Maintain stability of the preferred parent in case of similar ranks. */
   if(p1 == dag->preferred_parent || p2 == dag->preferred_parent) {
-    if(p1_metric < p2_metric + min_diff &&
-       p1_metric > p2_metric - min_diff) {
+    if(p1_metric < p2_metric + min_diff && p1_metric > p2_metric - min_diff) {
       PRINTF("RPL: MRHOF hysteresis: %u <= %u <= %u\n",
-             p2_metric - min_diff,
-             p1_metric,
-             p2_metric + min_diff);
+             p2_metric - min_diff, p1_metric, p2_metric + min_diff);
       return dag->preferred_parent;
     }
   }
@@ -204,16 +199,17 @@ best_parent(rpl_parent_t *p1, rpl_parent_t *p2)
 }
 #if RPL_DAG_MC == RPL_DAG_MC_NONE
 static void
-update_metric_container(rpl_instance_t *instance)
+update_metric_container(rpl_instance_t * instance)
 {
   instance->mc.type = RPL_DAG_MC;
 }
 #else
 static void
-update_metric_container(rpl_instance_t *instance)
+update_metric_container(rpl_instance_t * instance)
 {
   rpl_path_metric_t path_metric;
   rpl_dag_t *dag;
+
 #if RPL_DAG_MC == RPL_DAG_MC_ENERGY
   uint8_t type;
 #endif

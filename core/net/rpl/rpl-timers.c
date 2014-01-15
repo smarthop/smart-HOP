@@ -82,7 +82,8 @@ handle_periodic_timer(void *ptr)
 }
 /************************************************************************/
 void
-new_dio_interval(rpl_instance_t *instance, uip_ipaddr_t *dio_addr, uint8_t flag, char priority)
+new_dio_interval(rpl_instance_t * instance, uip_ipaddr_t * dio_addr,
+                 uint8_t flag, char priority)
 {
   uint32_t time, time2;
   clock_time_t ticks;
@@ -96,7 +97,7 @@ new_dio_interval(rpl_instance_t *instance, uip_ipaddr_t *dio_addr, uint8_t flag,
      * Trickle will not be affected.
      */
     time2 = (priority * CLOCK_SECOND) / 30;
-    /*dio_output(instance, mobile_dio_addr, 2);*/
+    /*dio_output(instance, mobile_dio_addr, 2); */
     PRINTF("RPL: Scheduling DIO timer %lu ticks in future\n", time2);
     ctimer_set(&instance->dio_timer, time2, &handle_dio_timer, instance);
   } else {
@@ -108,7 +109,8 @@ new_dio_interval(rpl_instance_t *instance, uip_ipaddr_t *dio_addr, uint8_t flag,
     instance->dio_next_delay = ticks;
 
     /* random number between I/2 and I */
-    ticks = ticks / 2 + (ticks / 2 * (uint32_t)random_rand()) / RANDOM_RAND_MAX;
+    ticks =
+      ticks / 2 + (ticks / 2 * (uint32_t) random_rand()) / RANDOM_RAND_MAX;
 
     /*
      * The intervals must be equally long among the nodes for Trickle to
@@ -124,18 +126,20 @@ new_dio_interval(rpl_instance_t *instance, uip_ipaddr_t *dio_addr, uint8_t flag,
     instance->dio_totrecv += instance->dio_counter;
     ANNOTATE("#A rank=%u.%u(%u),stats=%d %d %d %d,color=%s\n",
              DAG_RANK(instance->current_dag->rank, instance),
-             (10 * (instance->current_dag->rank % instance->min_hoprankinc)) / instance->min_hoprankinc,
-             instance->current_dag->version,
+             (10 * (instance->current_dag->rank % instance->min_hoprankinc)) /
+             instance->min_hoprankinc, instance->current_dag->version,
              instance->dio_totint, instance->dio_totsend,
              instance->dio_totrecv, instance->dio_intcurrent,
-             instance->current_dag->rank == ROOT_RANK(instance) ? "BLUE" : "ORANGE");
+             instance->current_dag->rank ==
+             ROOT_RANK(instance) ? "BLUE" : "ORANGE");
 #endif /* RPL_CONF_STATS */
 
     /* reset the redundancy counter */
     instance->dio_counter = 0;
 
     /* schedule the timer */
-    PRINTF("RPL: Scheduling DIO timer %lu ticks in future (Interval)\n", ticks);
+    PRINTF("RPL: Scheduling DIO timer %lu ticks in future (Interval)\n",
+           ticks);
     ctimer_set(&instance->dio_timer, ticks, &handle_dio_timer, instance);
   }
 }
@@ -145,7 +149,7 @@ handle_dio_timer(void *ptr)
 {
   rpl_instance_t *instance;
 
-  instance = (rpl_instance_t *)ptr;
+  instance = (rpl_instance_t *) ptr;
 
   PRINTF("RPL: DIO Timer triggered\n");
   if(instance->dio_reset_flag == 1) {
@@ -158,8 +162,10 @@ handle_dio_timer(void *ptr)
     if(uip_ds6_get_link_local(ADDR_PREFERRED) != NULL) {
       dio_send_ok = 1;
     } else {
-      PRINTF("RPL: Postponing DIO transmission since link local address is not ok\n");
-      ctimer_set(&instance->dio_timer, CLOCK_SECOND, &handle_dio_timer, instance);
+      PRINTF
+        ("RPL: Postponing DIO transmission since link local address is not ok\n");
+      ctimer_set(&instance->dio_timer, CLOCK_SECOND, &handle_dio_timer,
+                 instance);
       return;
     }
   }
@@ -178,12 +184,15 @@ handle_dio_timer(void *ptr)
     instance->dio_send = 0;
     PRINTF("RPL: Scheduling DIO timer %lu ticks in future (sent)\n",
            instance->dio_next_delay);
-    ctimer_set(&instance->dio_timer, instance->dio_next_delay, handle_dio_timer, instance);
+    ctimer_set(&instance->dio_timer, instance->dio_next_delay,
+               handle_dio_timer, instance);
   } else {
     /* check if we need to double interval */
-    if(instance->dio_intcurrent < instance->dio_intmin + instance->dio_intdoubl) {
+    if(instance->dio_intcurrent <
+       instance->dio_intmin + instance->dio_intdoubl) {
       instance->dio_intcurrent++;
-      PRINTF("RPL: DIO Timer interval doubled %d\n", instance->dio_intcurrent);
+      PRINTF("RPL: DIO Timer interval doubled %d\n",
+             instance->dio_intcurrent);
     }
     new_dio_interval(instance, NULL, 0, 0);
   }
@@ -193,8 +202,8 @@ void
 rpl_reset_periodic_timer(void)
 {
   next_dis = RPL_DIS_INTERVAL / 2 +
-    ((uint32_t)RPL_DIS_INTERVAL * (uint32_t)random_rand()) / RANDOM_RAND_MAX -
-    RPL_DIS_START_DELAY;
+    ((uint32_t) RPL_DIS_INTERVAL * (uint32_t) random_rand()) /
+    RANDOM_RAND_MAX - RPL_DIS_START_DELAY;
   ctimer_set(&periodic_timer, CLOCK_SECOND, handle_periodic_timer, NULL);
 }
 /*---------------------------------------------------------------------------*/
@@ -203,14 +212,14 @@ rpl_reset_periodic_timer(void)
  * or due to the mobility process that requires a smaller DIO interval that doesn't follow Trickle
  */
 void
-rpl_reset_dio_timer(rpl_instance_t *instance)
+rpl_reset_dio_timer(rpl_instance_t * instance)
 {
-  /*if flag = 1, we don't want to do any check for the dio_intcurrent or dio_intmin or the DIO might not be sent*/
+  /*if flag = 1, we don't want to do any check for the dio_intcurrent or dio_intmin or the DIO might not be sent */
   /*instance->dio_reset_flag=flag;
      if(flag==1){
      new_dio_interval(instance, priority);
      return;
-     }*/
+     } */
 
 #if !RPL_LEAF_ONLY
   /* Do not reset if we are already on the minimum interval,
@@ -228,7 +237,7 @@ rpl_reset_dio_timer(rpl_instance_t *instance)
 /*---------------------------------------------------------------------------*/
 static void handle_dao_timer(void *ptr);
 static void
-set_dao_lifetime_timer(rpl_instance_t *instance)
+set_dao_lifetime_timer(rpl_instance_t * instance)
 {
   if(rpl_get_mode() == RPL_MODE_FEATHER) {
     return;
@@ -238,9 +247,9 @@ set_dao_lifetime_timer(rpl_instance_t *instance)
      time has been configured */
   if(instance->lifetime_unit != 0xffff && instance->default_lifetime != 0xff) {
     clock_time_t expiration_time;
-    expiration_time = (clock_time_t)instance->default_lifetime *
-      (clock_time_t)instance->lifetime_unit *
-      CLOCK_SECOND / 2;
+
+    expiration_time = (clock_time_t) instance->default_lifetime *
+      (clock_time_t) instance->lifetime_unit * CLOCK_SECOND / 2;
     PRINTF("RPL: Scheduling DAO lifetime timer %u ticks in the future\n",
            (unsigned)expiration_time);
     ctimer_set(&instance->dao_lifetime_timer, expiration_time,
@@ -253,11 +262,12 @@ handle_dao_timer(void *ptr)
 {
   rpl_instance_t *instance;
 
-  instance = (rpl_instance_t *)ptr;
+  instance = (rpl_instance_t *) ptr;
 
   if(!dio_send_ok && uip_ds6_get_link_local(ADDR_PREFERRED) == NULL) {
     PRINTF("RPL: Postpone DAO transmission\n");
-    ctimer_set(&instance->dao_timer, CLOCK_SECOND, handle_dao_timer, instance);
+    ctimer_set(&instance->dao_timer, CLOCK_SECOND, handle_dao_timer,
+               instance);
     return;
   }
 
@@ -265,7 +275,8 @@ handle_dao_timer(void *ptr)
   if(instance->current_dag->preferred_parent != NULL) {
     PRINTF("RPL: handle_dao_timer - sending DAO\n");
     /* Set the route lifetime to the default value. */
-    dao_output(instance->current_dag->preferred_parent, instance->default_lifetime);
+    dao_output(instance->current_dag->preferred_parent,
+               instance->default_lifetime);
   } else {
     PRINTF("RPL: No suitable DAO parent\n");
   }
@@ -278,7 +289,7 @@ handle_dao_timer(void *ptr)
 }
 /*---------------------------------------------------------------------------*/
 static void
-schedule_dao(rpl_instance_t *instance, clock_time_t latency)
+schedule_dao(rpl_instance_t * instance, clock_time_t latency)
 {
   clock_time_t expiration_time;
 
@@ -292,8 +303,7 @@ schedule_dao(rpl_instance_t *instance, clock_time_t latency)
     PRINTF("RPL: DAO timer already scheduled\n");
   } else {
     if(latency != 0) {
-      expiration_time = latency / 2 +
-        (random_rand() % (latency));
+      expiration_time = latency / 2 + (random_rand() % (latency));
     } else {
       expiration_time = 0;
     }
@@ -307,19 +317,19 @@ schedule_dao(rpl_instance_t *instance, clock_time_t latency)
 }
 /*---------------------------------------------------------------------------*/
 void
-rpl_schedule_dao(rpl_instance_t *instance)
+rpl_schedule_dao(rpl_instance_t * instance)
 {
   schedule_dao(instance, RPL_DAO_LATENCY);
 }
 /*---------------------------------------------------------------------------*/
 void
-rpl_schedule_dao_immediately(rpl_instance_t *instance)
+rpl_schedule_dao_immediately(rpl_instance_t * instance)
 {
   schedule_dao(instance, 0);
 }
 /*---------------------------------------------------------------------------*/
 void
-rpl_cancel_dao(rpl_instance_t *instance)
+rpl_cancel_dao(rpl_instance_t * instance)
 {
   ctimer_stop(&instance->dao_timer);
   ctimer_stop(&instance->dao_lifetime_timer);

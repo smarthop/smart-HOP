@@ -91,7 +91,6 @@ rpl_set_mode(enum rpl_mode m)
     if(default_instance != NULL) {
       rpl_cancel_dao(default_instance);
     }
-
   } else {
     mode = m;
   }
@@ -220,7 +219,7 @@ rpl_link_neighbor_callback(const rimeaddr_t *addr, int status, int numtx)
   uip_ds6_set_addr_iid(&ipaddr, (uip_lladdr_t *)addr);
 
   for(instance = &instance_table[0], end = instance + RPL_MAX_INSTANCES; instance < end; ++instance) {
-    if(instance->used == 1 ) {
+    if(instance->used == 1) {
       parent = rpl_find_parent_any_dag(instance, &ipaddr);
       if(parent != NULL) {
         /* Trigger DAG rank recalculation. */
@@ -245,7 +244,7 @@ rpl_ipv6_neighbor_callback(uip_ds6_nbr_t *nbr)
   PRINT6ADDR(&nbr->ipaddr);
   PRINTF("\n");
   for(instance = &instance_table[0], end = instance + RPL_MAX_INSTANCES; instance < end; ++instance) {
-    if(instance->used == 1 ) {
+    if(instance->used == 1) {
       p = rpl_find_parent_any_dag(instance, &nbr->ipaddr);
       if(p != NULL) {
         p->rank = INFINITE_RANK;
