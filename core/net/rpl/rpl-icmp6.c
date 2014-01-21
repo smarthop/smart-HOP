@@ -86,8 +86,6 @@ static uint8_t dao_sequence = RPL_LOLLIPOP_INIT;
 
 extern rpl_of_t RPL_OF;
 
-/* ##### smart-HOP ####*/
-
 rpl_instance_t *process_instance;
 /*
  * dis_rssi -> RSSI reading from DIS
@@ -100,7 +98,7 @@ static uint8_t dis_rssi, dis_number, rssi_average;
 static uint16_t possible_parent_rssi[5];
 static uip_ipaddr_t possible_parent_addr[5];
 
- /* Aid in storage of the above info. */
+/* Aid in storage of the above info. */
 uint16_t best_parent_rssi;
 uip_ipaddr_t best_parent_addr;
 rpl_dio_t best_parent_dio;
@@ -112,7 +110,6 @@ rpl_parent_t *p;
  * true_rssi_average -> real measurable RSSI average
  */
 static int j, true_rssi, true_rssi_average;
-
 
 /* Store DIOs gathered in discovery phase. */
 rpl_dio_t dios[5];
@@ -143,10 +140,9 @@ static struct etimer dios_input;
 /* DAO delay upon best parent DIO processing */
 struct ctimer dao_period;
 
-
 /*---------------------------------------------------------------------------*/
 static int
-get_global_addr(uip_ipaddr_t * addr)
+get_global_addr(uip_ipaddr_t *addr)
 {
   int i;
   int state;
@@ -165,14 +161,14 @@ get_global_addr(uip_ipaddr_t * addr)
 }
 /*---------------------------------------------------------------------------*/
 static uint32_t
-get32(uint8_t * buffer, int pos)
+get32(uint8_t *buffer, int pos)
 {
-  return (uint32_t) buffer[pos] << 24 | (uint32_t) buffer[pos + 1] << 16 |
-    (uint32_t) buffer[pos + 2] << 8 | buffer[pos + 3];
+  return (uint32_t)buffer[pos] << 24 | (uint32_t)buffer[pos + 1] << 16 |
+         (uint32_t)buffer[pos + 2] << 8 | buffer[pos + 3];
 }
 /*---------------------------------------------------------------------------*/
 static void
-set32(uint8_t * buffer, int pos, uint32_t value)
+set32(uint8_t *buffer, int pos, uint32_t value)
 {
   buffer[pos++] = value >> 24;
   buffer[pos++] = (value >> 16) & 0xff;
@@ -181,13 +177,13 @@ set32(uint8_t * buffer, int pos, uint32_t value)
 }
 /*---------------------------------------------------------------------------*/
 static uint16_t
-get16(uint8_t * buffer, int pos)
+get16(uint8_t *buffer, int pos)
 {
-  return (uint16_t) buffer[pos] << 8 | buffer[pos + 1];
+  return (uint16_t)buffer[pos] << 8 | buffer[pos + 1];
 }
 /*---------------------------------------------------------------------------*/
 static void
-set16(uint8_t * buffer, int pos, uint16_t value)
+set16(uint8_t *buffer, int pos, uint16_t value)
 {
   buffer[pos++] = value >> 8;
   buffer[pos++] = value & 0xff;
@@ -226,19 +222,19 @@ dis_input(void)
 
 /* Here starts the reception and calculation of average RSSI when a burst of DIS is received. */
 #if !MOBILE_NODE
-    	  /* Received multicast DIS with flag = 1 */
-        if((buffer[1] & 0x80) >>7 == 1) {
+        /* Received multicast DIS with flag = 1 */
+        if((buffer[1] & 0x80) >> 7 == 1) {
           /* Loop avoidance */
           p = rpl_find_parent(dag, dio_addr);
           if(p != NULL) {
             PRINTF("Ignoring DIO request from parent ");
-               PRINT6ADDR(&p->addr);
-               PRINTF("\n");
+            PRINT6ADDR(&p->addr);
+            PRINTF("\n");
             return;
           }
           /* Get counter */
           dis_number = (buffer[1] & 0x60) >> 5;
-          PRINTF("Received DIS number %u\n",dis_number);
+          PRINTF("Received DIS number %u\n", dis_number);
           /* RSSI calculation */
           true_rssi = dis_rssi - 45;
           if(dis_rssi > 200) {
@@ -264,7 +260,6 @@ dis_input(void)
           /* If a Unicast DIS with flag is received, just reply with a DIO with flag. */
           dio_output(instance, &UIP_IP_BUF->srcipaddr, 1);
           return;
-
         } else {
           PRINTF("RPL: Unicast DIS, reply to sender\n");
           dio_output(instance, &UIP_IP_BUF->srcipaddr, 0);
@@ -279,47 +274,46 @@ eventhandler2(process_event_t ev, process_data_t data)
 {
   rpl_instance_t *instance = &instance_table[0];
 
-  switch (ev) {
+  switch(ev) {
 
- /*
-  * Self scalable timer. This event uses the dis_number received
-  * and sets the timer accordingly.
-  */
+  /*
+   * Self scalable timer. This event uses the dis_number received
+   * and sets the timer accordingly.
+   */
   case SET_DIS_DELAY:
-    {
-      etimer_set(&dis_delay, (3 - dis_number) * CLOCK_SECOND / 50);
-    }
-    break;
+  {
+    etimer_set(&dis_delay, (3 - dis_number) * CLOCK_SECOND / 50);
+  }
+  break;
 
-    /*
-     * If all the DISs were received, this function is started to process them.
-     * It will assign a priority to the DIO, according to the rssi_average value
-     * and trigger the DIO with new_dio_interval();
-     */
+  /*
+   * If all the DISs were received, this function is started to process them.
+   * It will assign a priority to the DIO, according to the rssi_average value
+   * and trigger the DIO with new_dio_interval();
+   */
   case PROCESS_EVENT_TIMER:
-    {
-      if(data == &dis_delay && etimer_expired(&dis_delay)) {
-        true_rssi_average = true_rssi_average / dis_number;
-        rssi_average = 255 + 46 + true_rssi_average;
-        if(true_rssi_average > -85) {
-          priority = 1;
-          if(true_rssi_average > -80) {
-            priority = 0;
-          }
-          /*PRINTF("RPL: Multicast DIS with flag => reset fast DIO timer\n"); */
-          /* Schedule DIO response according to the priority assigned to the DIO */
-          new_dio_interval(process_instance, NULL, 2, priority);
-          true_rssi_average = 0;
-        } else {
-          PRINTF("Ignoring DIO request. Average = %d\n",true_rssi_average);
-          true_rssi_average = 0;
+  {
+    if(data == &dis_delay && etimer_expired(&dis_delay)) {
+      true_rssi_average = true_rssi_average / dis_number;
+      rssi_average = 255 + 46 + true_rssi_average;
+      if(true_rssi_average > -85) {
+        priority = 1;
+        if(true_rssi_average > -80) {
+          priority = 0;
         }
+        /*PRINTF("RPL: Multicast DIS with flag => reset fast DIO timer\n"); */
+        /* Schedule DIO response according to the priority assigned to the DIO */
+        new_dio_interval(process_instance, NULL, 2, priority);
+        true_rssi_average = 0;
+      } else {
+        PRINTF("Ignoring DIO request. Average = %d\n", true_rssi_average);
+        true_rssi_average = 0;
       }
     }
-    break;
+  }
+  break;
   }
 }
-
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(multiple_dis_input, ev, data)
 {
@@ -336,7 +330,7 @@ PROCESS_THREAD(multiple_dis_input, ev, data)
 /*---------------------------------------------------------------------------*/
 /* Added flags and counter */
 void
-dis_output(uip_ipaddr_t * addr, uint8_t flags, uint8_t counter)
+dis_output(uip_ipaddr_t *addr, uint8_t flags, uint8_t counter)
 {
   unsigned char *buffer;
   uip_ipaddr_t tmpaddr;
@@ -359,8 +353,8 @@ dis_output(uip_ipaddr_t * addr, uint8_t flags, uint8_t counter)
   }
 
   PRINTF("RPL: Sending a DIS to ");
-     PRINT6ADDR(addr);
-     PRINTF("\n");
+  PRINT6ADDR(addr);
+  PRINTF("\n");
 
   uip_icmp6_send(addr, ICMP6_RPL, RPL_CODE_DIS, 2);
 
@@ -379,7 +373,6 @@ dis_output(uip_ipaddr_t * addr, uint8_t flags, uint8_t counter)
       process_post_synch(&wait_dios, RESET_DIOS_INPUT, NULL);
     }
   }
-
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -412,9 +405,9 @@ dio_input(void)
   uip_ipaddr_copy(&from, &UIP_IP_BUF->srcipaddr);
 
   /* DAG Information Object */
-  	 PRINTF("RPL: Received a DIO from ");
-     PRINT6ADDR(&from);
-     PRINTF("\n");
+  PRINTF("RPL: Received a DIO from ");
+  PRINT6ADDR(&from);
+  PRINTF("\n");
 
   if((nbr = uip_ds6_nbr_lookup(&from)) == NULL) {
     if((nbr = uip_ds6_nbr_add(&from, (uip_lladdr_t *)
@@ -425,13 +418,13 @@ dio_input(void)
       PRINTF("RPL: Neighbor added to neighbor cache ");
       PRINT6ADDR(&from);
       PRINTF(", ");
-      PRINTLLADDR((uip_lladdr_t *) packetbuf_addr(PACKETBUF_ADDR_SENDER));
+      PRINTLLADDR((uip_lladdr_t *)packetbuf_addr(PACKETBUF_ADDR_SENDER));
       PRINTF("\n");
     } else {
       PRINTF("RPL: Out of Memory, dropping DIO from ");
       PRINT6ADDR(&from);
       PRINTF(", ");
-      PRINTLLADDR((uip_lladdr_t *) packetbuf_addr(PACKETBUF_ADDR_SENDER));
+      PRINTLLADDR((uip_lladdr_t *)packetbuf_addr(PACKETBUF_ADDR_SENDER));
       PRINTF("\n");
       return;
     }
@@ -451,9 +444,9 @@ dio_input(void)
   i += 2;
 
   PRINTF("RPL: Incoming DIO (id, ver, rank) = (%u,%u,%u)\n",
-     (unsigned)dio.instance_id,
-     (unsigned)dio.version,
-     (unsigned)dio.rank);
+         (unsigned)dio.instance_id,
+         (unsigned)dio.version,
+         (unsigned)dio.rank);
 
   dio.grounded = buffer[i] & RPL_DIO_GROUNDED;
   dio.mop = (buffer[i] & RPL_DIO_MOP_MASK) >> RPL_DIO_MOP_SHIFT;
@@ -462,26 +455,26 @@ dio_input(void)
   /*
       0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7
      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-     | RPLInstanceID |Version Number |             Rank              |
-     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-     |G|0| MOP | Prf |     DTSN      |     Flags | F |     RSSI	     |
-     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-     |                                                               |
-     +                                                               +
-     |                                                               |
-     +                            DODAGID                            +
-     |                                                               |
-     +                                                               +
-     |                                                               |
-     |+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+--+
-     |   Option(s)...
-     |+-+-+-+-+-+-+-+-+
-     *
-     * According to the specification, DIO messages have the bytes Flags and Reserved equals to 0
-     * F is being used to distinguish normal DIO from those triggered by the mobility process
-     * When a parent sends a DIS with a flag, a DIO response is expected, and this DIO needs to carry a flag
-     * so that normal/periodic DIOs don't trigger an unexpected behavior.
-     * Reserved is being used to send the RSSI that is read by the parent upon DIS reception.
+   | RPLInstanceID |Version Number |             Rank              |
+   |+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   ||G|0| MOP | Prf |     DTSN      |     Flags | F |     RSSI	     |
+   |+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                                                               |
+   +                                                               +
+   |                                                               |
+   +                            DODAGID                            +
+   |                                                               |
+   +                                                               +
+   |                                                               |
+   ||+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+--+
+   |   Option(s)...
+   ||+-+-+-+-+-+-+-+-+
+   *
+   * According to the specification, DIO messages have the bytes Flags and Reserved equals to 0
+   * F is being used to distinguish normal DIO from those triggered by the mobility process
+   * When a parent sends a DIS with a flag, a DIO response is expected, and this DIO needs to carry a flag
+   * so that normal/periodic DIOs don't trigger an unexpected behavior.
+   * Reserved is being used to send the RSSI that is read by the parent upon DIS reception.
    */
   dio.dtsn = buffer[i++];
   dio.flags = buffer[i++];
@@ -489,13 +482,12 @@ dio_input(void)
   /* one reserved byte */
   /*i += 1; */
 
-
   memcpy(&dio.dag_id, buffer + i, sizeof(dio.dag_id));
   i += sizeof(dio.dag_id);
 
   PRINTF("RPL: Incoming DIO (dag_id, pref) = (");
-     PRINT6ADDR(&dio.dag_id);
-     PRINTF(", %u)\n", dio.preference);
+  PRINT6ADDR(&dio.dag_id);
+  PRINTF(", %u)\n", dio.preference);
 
   /* Check if there are any DIO suboptions. */
   for(; i < buffer_length; i += len) {
@@ -515,7 +507,7 @@ dio_input(void)
 
     /*PRINTF("RPL: DIO option %u, length: %u\n", subopt_type, len - 2); */
 
-    switch (subopt_type) {
+    switch(subopt_type) {
     case RPL_OPTION_DAG_METRIC_CONTAINER:
       if(len < 6) {
         /*PRINTF("RPL: Invalid DAG MC, len = %d\n", len); */
@@ -535,12 +527,12 @@ dio_input(void)
         dio.mc.obj.etx = get16(buffer, i + 6);
 
         PRINTF("RPL: DAG MC: type %u, flags %u, aggr %u, prec %u, length %u, ETX %u\n",
-           (unsigned)dio.mc.type,
-           (unsigned)dio.mc.flags,
-           (unsigned)dio.mc.aggr,
-           (unsigned)dio.mc.prec,
-           (unsigned)dio.mc.length,
-           (unsigned)dio.mc.obj.etx);
+               (unsigned)dio.mc.type,
+               (unsigned)dio.mc.flags,
+               (unsigned)dio.mc.aggr,
+               (unsigned)dio.mc.prec,
+               (unsigned)dio.mc.length,
+               (unsigned)dio.mc.obj.etx);
       } else if(dio.mc.type == RPL_DAG_MC_ENERGY) {
         dio.mc.obj.energy.flags = buffer[i + 6];
         dio.mc.obj.energy.energy_est = buffer[i + 7];
@@ -591,9 +583,9 @@ dio_input(void)
       dio.default_lifetime = buffer[i + 13];
       dio.lifetime_unit = get16(buffer, i + 14);
       PRINTF("RPL: DAG conf:dbl=%d, min=%d red=%d maxinc=%d mininc=%d ocp=%d d_l=%u l_u=%u\n",
-         dio.dag_intdoubl, dio.dag_intmin, dio.dag_redund,
-         dio.dag_max_rankinc, dio.dag_min_hoprankinc, dio.ocp,
-         dio.default_lifetime, dio.lifetime_unit);
+             dio.dag_intdoubl, dio.dag_intmin, dio.dag_redund,
+             dio.dag_max_rankinc, dio.dag_min_hoprankinc, dio.ocp,
+             dio.default_lifetime, dio.lifetime_unit);
       break;
     case RPL_OPTION_PREFIX_INFO:
       if(len != 32) {
@@ -620,20 +612,19 @@ dio_input(void)
   RPL_DEBUG_DIO_INPUT(&from, &dio);
 #endif
 
-
   /*
    * Upon reception of a DIO, there can be 2 cases:
-   * 	- DIO reply when assessing parent
-   * 	- DIO reply when in discovery phase
+   *  - DIO reply when assessing parent
+   *  - DIO reply when in discovery phase
    * IF we are assessing parent and receive a DIO:
-   * 	- Stop the countdown of the DIO reception
-   * 	if timer reached 0, the parent is considered unreachable
-   * 	- Post an event stating that a DIO was received and the parent is reachable.
+   *  - Stop the countdown of the DIO reception
+   *  if timer reached 0, the parent is considered unreachable
+   *  - Post an event stating that a DIO was received and the parent is reachable.
    * If we are in discovery phase:
-   * 	- Save DIO address in array
-   * 	- Save RSSI in array
-   * 	- Save DIO in array
-   * 	- Increment total number of DIOs received (j)
+   *  - Save DIO address in array
+   *  - Save RSSI in array
+   *  - Save DIO in array
+   *  - Increment total number of DIOs received (j)
    */
 #if MOBILE_NODE
   if(dio.flags == 1 && mobility_flag == 1) {
@@ -658,7 +649,6 @@ dio_input(void)
     rpl_process_dio(&from, &dio, 0);
   }
 }
-
 void
 eventhandler3(process_event_t ev, process_data_t data)
 {
@@ -666,114 +656,114 @@ eventhandler3(process_event_t ev, process_data_t data)
   rpl_dag_t *dag = instance->current_dag;
   int best_rssi, k, t;
 
-  switch (ev) {
+  switch(ev) {
 
-   /* Timer initiated after a DIS is sent, to wait for all DIO replies from possible parents. */
+  /* Timer initiated after a DIS is sent, to wait for all DIO replies from possible parents. */
   case SET_DIOS_INPUT:
-    {
-      etimer_set(&dios_input, CLOCK_SECOND / 25);
-    }
-    break;
+  {
+    etimer_set(&dios_input, CLOCK_SECOND / 25);
+  }
+  break;
 /* The timer was SET the 1st time it was needed. Just reset it the following times. */
   case RESET_DIOS_INPUT:
-    {
-      etimer_reset(&dios_input);
-    }
-    break;
+  {
+    etimer_reset(&dios_input);
+  }
+  break;
 
   case PROCESS_EVENT_TIMER:
-    {
-    	/*
-    	 * When the dios_input timer expires, we start comparing the received DIOs.
-    	 * The number of DIOs is represented by 'j'.
-    	 *
-    	 */
-      if(data == &dios_input && etimer_expired(&dios_input)) {
-        if(j != 0 && mobility_flag == 1 && hand_off_backoff_flag == 0) {
-          /*if(j==1 && uip_ipaddr_cmp(possible_parent_addr[0],&(dag->preferred_parent->addr))==1){
-             PRINTF("Received a single DIO from current parent\n");
-             mobility_flag=0;
-             } */
+  {
+    /*
+     * When the dios_input timer expires, we start comparing the received DIOs.
+     * The number of DIOs is represented by 'j'.
+     *
+     */
+    if(data == &dios_input && etimer_expired(&dios_input)) {
+      if(j != 0 && mobility_flag == 1 && hand_off_backoff_flag == 0) {
+        /*if(j==1 && uip_ipaddr_cmp(possible_parent_addr[0],&(dag->preferred_parent->addr))==1){
+           PRINTF("Received a single DIO from current parent\n");
+           mobility_flag=0;
+           } */
 
-          /*PRINTF("Received %d DIOS\n",j);
-             PRINTF("DIOS table list:\n");
+        /*PRINTF("Received %d DIOS\n",j);
+           PRINTF("DIOS table list:\n");
 
-             for(t=0;t<j;t++){
-             PRINT6ADDR(&possible_parent_addr[t]);
-             PRINTF(" -> %u\n",possible_parent_rssi[t]);
-             } */
-          best_parent_rssi = possible_parent_rssi[0];
-          best_parent_addr = possible_parent_addr[0];
-          best_parent_dio = dios[0];
-          if(best_parent_rssi < 50) {
-            best_parent_rssi += 255;
+           for(t=0;t<j;t++){
+           PRINT6ADDR(&possible_parent_addr[t]);
+           PRINTF(" -> %u\n",possible_parent_rssi[t]);
+           } */
+        best_parent_rssi = possible_parent_rssi[0];
+        best_parent_addr = possible_parent_addr[0];
+        best_parent_dio = dios[0];
+        if(best_parent_rssi < 50) {
+          best_parent_rssi += 255;
+        }
+        for(k = 1; k < j; k++) {
+          if(possible_parent_rssi[k] < 50) {
+            possible_parent_rssi[k] = possible_parent_rssi[k] + 255;
           }
-          for(k = 1; k < j; k++) {
-            if(possible_parent_rssi[k] < 50) {
-              possible_parent_rssi[k] = possible_parent_rssi[k] + 255;
-            }
-            /*PRINTF("COMPARING: \n");
-               PRINT6ADDR(&best_parent_addr);
-               PRINTF(" %u\n",best_parent_rssi);
-               PRINT6ADDR(&possible_parent_addr[k]);
-               PRINTF(" %u\n",possible_parent_rssi[k]); */
-            if(possible_parent_rssi[k] > best_parent_rssi) {
-              best_parent_rssi = possible_parent_rssi[k];
-              best_parent_addr = possible_parent_addr[k];
-              best_parent_dio = dios[k];
-            }
+          /*PRINTF("COMPARING: \n");
+             PRINT6ADDR(&best_parent_addr);
+             PRINTF(" %u\n",best_parent_rssi);
+             PRINT6ADDR(&possible_parent_addr[k]);
+             PRINTF(" %u\n",possible_parent_rssi[k]); */
+          if(possible_parent_rssi[k] > best_parent_rssi) {
+            best_parent_rssi = possible_parent_rssi[k];
+            best_parent_addr = possible_parent_addr[k];
+            best_parent_dio = dios[k];
           }
-          PRINTF("Best -> ");
-          PRINT6ADDR(&best_parent_addr);
-          PRINTF("\n");
-          if(uip_ipaddr_cmp
+        }
+        PRINTF("Best -> ");
+        PRINT6ADDR(&best_parent_addr);
+        PRINTF("\n");
+        if(uip_ipaddr_cmp
              (&best_parent_addr,
-              (rpl_get_parent_ipaddr(dag->preferred_parent)))) {
-            /*PRINTF("Best parent = current parent\n");*/
-            if(best_parent_rssi > 255) {
-              best_parent_rssi -= 255;
-            }
-            best_rssi = best_parent_rssi - 45;
-            if(best_parent_rssi > 200) {
-              best_rssi = best_parent_rssi - 255 - 46;
-            }
-            if(best_rssi <= -90) {
-              /*PRINTF("Bad rssi -> Discovery phase\n"); */
-              process_post_synch(&unreach_process, DIS_BURST, NULL);
-            } else {
-              process_post_synch(&tcpip_process, RESET_MOBILITY_FLAG, NULL);
-            }
-            /*else{
-               rpl_remove_parent(dag,dag->preferred_parent);
-               rpl_process_dio(&best_parent_addr, &best_parent_dio, 1);
-               } */
-            /*process_post_synch(&dis_send_process,PROCESS_EVENT_INIT,NULL); */
-
-            /*instance = rpl_get_instance(best_parent_dio.instance_id);
-               rpl_set_default_route(instance,&best_parent_addr); */
+             (rpl_get_parent_ipaddr(dag->preferred_parent)))) {
+          /*PRINTF("Best parent = current parent\n");*/
+          if(best_parent_rssi > 255) {
+            best_parent_rssi -= 255;
+          }
+          best_rssi = best_parent_rssi - 45;
+          if(best_parent_rssi > 200) {
+            best_rssi = best_parent_rssi - 255 - 46;
+          }
+          if(best_rssi <= -90) {
+            /*PRINTF("Bad rssi -> Discovery phase\n"); */
+            process_post_synch(&unreach_process, DIS_BURST, NULL);
           } else {
+            process_post_synch(&tcpip_process, RESET_MOBILITY_FLAG, NULL);
+          }
+          /*else{
+             rpl_remove_parent(dag,dag->preferred_parent);
+             rpl_process_dio(&best_parent_addr, &best_parent_dio, 1);
+             } */
+          /*process_post_synch(&dis_send_process,PROCESS_EVENT_INIT,NULL); */
 
-        	  /* Remove the current parent and process the DIO of the Best Parent */
-        	  rpl_remove_parent(dag->preferred_parent);
-            rpl_process_dio(&best_parent_addr, &best_parent_dio, 1);
-          }
-          for(k = 0; k < j; k++) {
-            possible_parent_rssi[k] = possible_parent_rssi[j];
-            possible_parent_addr[k] = possible_parent_addr[j];
-            dios[k] = dios[j];
-            j = 0;
-          }
+          /*instance = rpl_get_instance(best_parent_dio.instance_id);
+             rpl_set_default_route(instance,&best_parent_addr); */
         } else {
 
+          /* Remove the current parent and process the DIO of the Best Parent */
+          rpl_remove_parent(dag->preferred_parent);
+          rpl_process_dio(&best_parent_addr, &best_parent_dio, 1);
+        }
+        for(k = 0; k < j; k++) {
+          possible_parent_rssi[k] = possible_parent_rssi[j];
+          possible_parent_addr[k] = possible_parent_addr[j];
+          dios[k] = dios[j];
+          j = 0;
+        }
+      } else {
+
         /* No DIOs received. Repeat discovery phase. */
-          if(mobility_flag == 1) {
-            PRINTF("No DIOs received.\n");
-            process_post_synch(&unreach_process, PARENT_UNREACHABLE, NULL);
-          }
+        if(mobility_flag == 1) {
+          PRINTF("No DIOs received.\n");
+          process_post_synch(&unreach_process, PARENT_UNREACHABLE, NULL);
         }
       }
     }
-    break;
+  }
+  break;
   }
 }
 PROCESS_THREAD(wait_dios, ev, data)
@@ -790,7 +780,7 @@ PROCESS_THREAD(wait_dios, ev, data)
 /*---------------------------------------------------------------------------*/
 
 void
-dio_output(rpl_instance_t * instance, uip_ipaddr_t * uc_addr, uint8_t flags)
+dio_output(rpl_instance_t *instance, uip_ipaddr_t *uc_addr, uint8_t flags)
 {
   unsigned char *buffer;
   int pos;
@@ -910,8 +900,8 @@ dio_output(rpl_instance_t * instance, uip_ipaddr_t * uc_addr, uint8_t flags)
     memcpy(&buffer[pos], &dag->prefix_info.prefix, 16);
     pos += 16;
     PRINTF("RPL: Sending prefix info in DIO for ");
-       PRINT6ADDR(&dag->prefix_info.prefix);
-       PRINTF("\n");
+    PRINT6ADDR(&dag->prefix_info.prefix);
+    PRINTF("\n");
   } else {
     PRINTF("RPL: No prefix to announce (len %d)\n", dag->prefix_info.length);
   }
@@ -1020,7 +1010,7 @@ dao_input(void)
       len = 2 + buffer[i + 1];
     }
 
-    switch (subopt_type) {
+    switch(subopt_type) {
     case RPL_OPTION_TARGET:
       /* Handle the target option. */
       prefixlen = buffer[i + 3];
@@ -1090,7 +1080,7 @@ dao_input(void)
        DAG_RANK(p->rank, instance) < DAG_RANK(dag->rank, instance)) {
       PRINTF
         ("RPL: Loop detected when receiving a unicast DAO from a node with a lower rank! (%u < %u)\n",
-         DAG_RANK(p->rank, instance), DAG_RANK(dag->rank, instance));
+        DAG_RANK(p->rank, instance), DAG_RANK(dag->rank, instance));
       p->rank = INFINITE_RANK;
       p->updated = 1;
       return;
@@ -1118,13 +1108,13 @@ dao_input(void)
       PRINTF("RPL: Neighbor added to neighbor cache ");
       PRINT6ADDR(&dao_sender_addr);
       PRINTF(", ");
-      PRINTLLADDR((uip_lladdr_t *) packetbuf_addr(PACKETBUF_ADDR_SENDER));
+      PRINTLLADDR((uip_lladdr_t *)packetbuf_addr(PACKETBUF_ADDR_SENDER));
       PRINTF("\n");
     } else {
       PRINTF("RPL: Out of Memory, dropping DAO from ");
       PRINT6ADDR(&dao_sender_addr);
       PRINTF(", ");
-      PRINTLLADDR((uip_lladdr_t *) packetbuf_addr(PACKETBUF_ADDR_SENDER));
+      PRINTLLADDR((uip_lladdr_t *)packetbuf_addr(PACKETBUF_ADDR_SENDER));
       PRINTF("\n");
       return;
     }
@@ -1160,7 +1150,7 @@ dao_input(void)
 }
 /*---------------------------------------------------------------------------*/
 void
-dao_output(rpl_parent_t * parent, uint8_t lifetime)
+dao_output(rpl_parent_t *parent, uint8_t lifetime)
 {
   /* Destination Advertisement Object */
   uip_ipaddr_t prefix;
@@ -1175,7 +1165,7 @@ dao_output(rpl_parent_t * parent, uint8_t lifetime)
 }
 /*---------------------------------------------------------------------------*/
 void
-dao_output_target(rpl_parent_t * parent, uip_ipaddr_t * prefix,
+dao_output_target(rpl_parent_t *parent, uip_ipaddr_t *prefix,
                   uint8_t lifetime)
 {
   rpl_dag_t *dag;
@@ -1265,18 +1255,15 @@ dao_output_target(rpl_parent_t * parent, uip_ipaddr_t * prefix,
                    pos);
   }
 /*
- * ###################
- * smart-HOP START
- * ###################
+ * smart-HOP depends a lot on downward routes.
+ * DAO-ACK is enabled but there was no mechanism to re-send it in case of failure.
+ * After we process the Best parent DIO and send a DAO in the end, we check if a DAO-ACK
+ * was received within a certain period of time.
+ * If not, re-send it.
  */
   if(mobility_flag && check_dao_ack) {
     ctimer_set(&dao_period, CLOCK_SECOND / 4, rpl_schedule_dao, instance);
   }
-/*
- * ###################
- * smart-HOP END
- * ###################
- */
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -1298,35 +1285,28 @@ dao_ack_input(void)
 
   PRINTF
     ("RPL: Received a DAO ACK with sequence number %d and status %d from ",
-     sequence, status);
+    sequence, status);
   PRINT6ADDR(&UIP_IP_BUF->srcipaddr);
   PRINTF("\n");
 /*
- * ###################
- * smart-HOP START
- * ###################
- */
+ * DAO was received. Stop the timer and reset flag */
+  * /
   if(check_dao_ack == 1) {
     check_dao_ack = 0;
     ctimer_stop(&dao_period);
   }
-/*
- * ###################
- * smart-HOP END
- * ###################
- */
 #endif /* DEBUG */
 }
 /*---------------------------------------------------------------------------*/
 void
-dao_ack_output(rpl_instance_t * instance, uip_ipaddr_t * dest,
+dao_ack_output(rpl_instance_t *instance, uip_ipaddr_t *dest,
                uint8_t sequence)
 {
   unsigned char *buffer;
 
-  /*PRINTF("RPL: Sending a DAO ACK with sequence number %d to ", sequence);
-     PRINT6ADDR(dest);
-     PRINTF("\n"); */
+  PRINTF("RPL: Sending a DAO ACK with sequence number %d to ", sequence);
+  PRINT6ADDR(dest);
+  PRINTF("\n");
 
   buffer = UIP_ICMP_PAYLOAD;
 
@@ -1341,8 +1321,8 @@ dao_ack_output(rpl_instance_t * instance, uip_ipaddr_t * dest,
 void
 uip_rpl_input(void)
 {
-  PRINTF("Received an RPL control message\n"); 
-  switch (UIP_ICMP_BUF->icode) {
+  PRINTF("Received an RPL control message\n");
+  switch(UIP_ICMP_BUF->icode) {
   case RPL_CODE_DIO:
     dio_input();
     break;
@@ -1359,7 +1339,6 @@ uip_rpl_input(void)
     PRINTF("RPL: received an unknown ICMP6 code (%u)\n", UIP_ICMP_BUF->icode);
     break;
   }
-
   uip_len = 0;
 }
 #endif /* UIP_CONF_IPV6 */

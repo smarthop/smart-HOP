@@ -126,8 +126,8 @@ rpl_verify_header(int uip_ext_opt_offset)
   if((down && !sender_closer) || (!down && sender_closer)) {
     PRINTF
       ("RPL: Loop detected - senderrank: %d my-rank: %d sender_closer: %d\n",
-       UIP_EXT_HDR_OPT_RPL_BUF->senderrank, instance->current_dag->rank,
-       sender_closer);
+      UIP_EXT_HDR_OPT_RPL_BUF->senderrank, instance->current_dag->rank,
+      sender_closer);
     if(UIP_EXT_HDR_OPT_RPL_BUF->flags & RPL_HDR_OPT_RANK_ERR) {
       PRINTF("RPL: Rank error signalled in RPL option!\n");
       /* We should try to repair it, not implemented for the moment */
@@ -181,7 +181,7 @@ rpl_update_header_empty(void)
 
   PRINTF("RPL: Verifying the presence of the RPL header option\n");
 
-  switch (UIP_IP_BUF->proto) {
+  switch(UIP_IP_BUF->proto) {
   case UIP_PROTO_HBHO:
     if(UIP_HBHO_BUF->len != RPL_HOP_BY_HOP_LEN - 8) {
       PRINTF("RPL: Non RPL Hop-by-hop options support not implemented\n");
@@ -207,7 +207,7 @@ rpl_update_header_empty(void)
     return;
   }
 
-  switch (UIP_EXT_HDR_OPT_BUF->type) {
+  switch(UIP_EXT_HDR_OPT_BUF->type) {
   case UIP_EXT_HDR_OPT_RPL:
     PRINTF("RPL: Updating RPL option\n");
     UIP_EXT_HDR_OPT_RPL_BUF->senderrank = instance->current_dag->rank;
@@ -247,7 +247,7 @@ rpl_update_header_empty(void)
 }
 /*---------------------------------------------------------------------------*/
 int
-rpl_update_header_final(uip_ipaddr_t * addr)
+rpl_update_header_final(uip_ipaddr_t *addr)
 {
   rpl_parent_t *parent;
   int uip_ext_opt_offset;
@@ -295,7 +295,7 @@ rpl_remove_header(void)
   uip_ext_len = 0;
 
   PRINTF("RPL: Verifying the presence of the RPL header option\n");
-  switch (UIP_IP_BUF->proto) {
+  switch(UIP_IP_BUF->proto) {
   case UIP_PROTO_HBHO:
     PRINTF("RPL: Removing the RPL header option\n");
     UIP_IP_BUF->proto = UIP_HBHO_BUF->next;
@@ -323,7 +323,7 @@ rpl_invert_header(void)
   uip_ext_opt_offset = 2;
 
   PRINTF("RPL: Verifying the presence of the RPL header option\n");
-  switch (UIP_IP_BUF->proto) {
+  switch(UIP_IP_BUF->proto) {
   case UIP_PROTO_HBHO:
     break;
   default:
@@ -332,7 +332,7 @@ rpl_invert_header(void)
     return 0;
   }
 
-  switch (UIP_EXT_HDR_OPT_BUF->type) {
+  switch(UIP_EXT_HDR_OPT_BUF->type) {
   case UIP_EXT_HDR_OPT_RPL:
     PRINTF("RPL: Updating RPL option (switching direction)\n");
     UIP_EXT_HDR_OPT_RPL_BUF->flags &= RPL_HDR_OPT_DOWN;

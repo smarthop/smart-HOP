@@ -65,12 +65,12 @@ rpl_of_t rpl_of0 = {
 #define MIN_DIFFERENCE (RPL_MIN_HOPRANKINC + RPL_MIN_HOPRANKINC / 2)
 
 static void
-reset(rpl_dag_t * dag)
+reset(rpl_dag_t *dag)
 {
   PRINTF("RPL: Resetting OF0\n");
 }
 static rpl_rank_t
-calculate_rank(rpl_parent_t * p, rpl_rank_t base_rank)
+calculate_rank(rpl_parent_t *p, rpl_rank_t base_rank)
 {
   rpl_rank_t increment;
 
@@ -84,7 +84,7 @@ calculate_rank(rpl_parent_t * p, rpl_rank_t base_rank)
   increment = p != NULL ?
     p->dag->instance->min_hoprankinc : DEFAULT_RANK_INCREMENT;
 
-  if((rpl_rank_t) (base_rank + increment) < base_rank) {
+  if((rpl_rank_t)(base_rank + increment) < base_rank) {
     PRINTF("RPL: OF0 rank %d incremented to infinite rank due to wrapping\n",
            base_rank);
     return INFINITE_RANK;
@@ -92,7 +92,7 @@ calculate_rank(rpl_parent_t * p, rpl_rank_t base_rank)
   return base_rank + increment;
 }
 static rpl_dag_t *
-best_dag(rpl_dag_t * d1, rpl_dag_t * d2)
+best_dag(rpl_dag_t *d1, rpl_dag_t *d2)
 {
   if(d1->grounded) {
     if(!d2->grounded) {
@@ -117,7 +117,7 @@ best_dag(rpl_dag_t * d1, rpl_dag_t * d2)
   }
 }
 static rpl_parent_t *
-best_parent(rpl_parent_t * p1, rpl_parent_t * p2)
+best_parent(rpl_parent_t *p1, rpl_parent_t *p2)
 {
   rpl_rank_t r1, r2;
   rpl_dag_t *dag;
@@ -136,7 +136,7 @@ best_parent(rpl_parent_t * p1, rpl_parent_t * p2)
      for that parent. We choose the parent that has the most
      favourable combination. */
 
-  dag = (rpl_dag_t *) p1->dag;  /* Both parents must be in the same DAG. */
+  dag = (rpl_dag_t *)p1->dag;   /* Both parents must be in the same DAG. */
   if(r1 < r2 + MIN_DIFFERENCE && r1 > r2 - MIN_DIFFERENCE) {
     return dag->preferred_parent;
   } else if(r1 < r2) {
@@ -146,7 +146,7 @@ best_parent(rpl_parent_t * p1, rpl_parent_t * p2)
   }
 }
 static void
-update_metric_container(rpl_instance_t * instance)
+update_metric_container(rpl_instance_t *instance)
 {
   instance->mc.type = RPL_DAG_MC_NONE;
 }

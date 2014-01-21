@@ -366,11 +366,7 @@ extern unsigned char tcpip_is_forwarding;
 
 
 #define tcpip_set_forwarding(forwarding) tcpip_do_forwarding = (forwarding)
-/*
- * ###################
- * smart-HOP START
- * ###################
- */
+
 extern char mobility_flag, NO_DATA, test_unreachable, hand_off_backoff_flag;
 enum {
   TCP_POLL,
@@ -378,11 +374,6 @@ enum {
   PACKET_INPUT,
   RESET_MOBILITY_FLAG
 };
-/*
- * ###################
- * smart-HOP END
- * ###################
- */
 /** @} */
 
 PROCESS_NAME(tcpip_process);

@@ -91,7 +91,6 @@ rpl_set_mode(enum rpl_mode m)
     if(default_instance != NULL) {
       rpl_cancel_dao(default_instance);
     }
-
   } else {
     mode = m;
   }

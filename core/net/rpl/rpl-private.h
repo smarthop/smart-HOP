@@ -106,7 +106,7 @@
 #ifdef RPL_CONF_DAO_LATENCY
 #define RPL_DAO_LATENCY                 RPL_CONF_DAO_LATENCY
 #else /* RPL_CONF_DAO_LATENCY */
-#define RPL_DAO_LATENCY                 (CLOCK_SECOND / 50) //smart-HOP edited
+#define RPL_DAO_LATENCY                 (CLOCK_SECOND / 50)
 #endif /* RPL_DAO_LATENCY */
 
 /* Special value indicating immediate removal. */
@@ -265,11 +265,7 @@ extern rpl_stats_t rpl_stats;
 #endif /* RPL_CONF_STATS */
 /*---------------------------------------------------------------------------*/
 
-/*
- * ###################
- * smart-HOP START
- * ###################
- */
+
 CCIF extern process_event_t unreach_event;
 
 PROCESS_NAME(unreach_process);
@@ -285,19 +281,14 @@ extern enum {
 void rpl_unreach();
 void rpl_dis_burst();
 void rpl_reachable(uint8_t dis_rssi);
-/*
- * ###################
- * smart-HOP END
- * ###################
- */
 
 /* Instances */
 extern rpl_instance_t instance_table[];
 extern rpl_instance_t *default_instance;
 
 /* ICMPv6 functions for RPL. */
-void dis_output(uip_ipaddr_t * addr, uint8_t flags, uint8_t counter); //smart-HOP edited
-void dio_output(rpl_instance_t *, uip_ipaddr_t * uc_addr, uint8_t flags); //smart-HOP edited
+void dis_output(uip_ipaddr_t * addr, uint8_t flags, uint8_t counter);
+void dio_output(rpl_instance_t *, uip_ipaddr_t * uc_addr, uint8_t flags);
 void dao_output(rpl_parent_t *, uint8_t lifetime);
 void dao_output_target(rpl_parent_t *, uip_ipaddr_t *, uint8_t lifetime);
 void dao_ack_output(rpl_instance_t *, uip_ipaddr_t *, uint8_t);
@@ -306,7 +297,7 @@ void dao_ack_output(rpl_instance_t *, uip_ipaddr_t *, uint8_t);
 void rpl_join_dag(uip_ipaddr_t * from, rpl_dio_t * dio);
 void rpl_join_instance(uip_ipaddr_t * from, rpl_dio_t * dio);
 void rpl_local_repair(rpl_instance_t * instance);
-void rpl_process_dio(uip_ipaddr_t *, rpl_dio_t *, int mobility); //smart-HOP edited
+void rpl_process_dio(uip_ipaddr_t *, rpl_dio_t *, int mobility);
 int rpl_process_parent_event(rpl_instance_t *, rpl_parent_t *);
 
 /* DAG object management. */
@@ -349,7 +340,7 @@ void rpl_cancel_dao(rpl_instance_t * instance);
 void rpl_reset_dio_timer(rpl_instance_t *);
 void rpl_reset_periodic_timer(void);
 void new_dio_interval(rpl_instance_t * instance, uip_ipaddr_t * dio_addr,
-                      uint8_t flag, char priority); //smart-HOP edited
+                      uint8_t flag, char priority);
 
 /* Route poisoning. */
 void rpl_poison_routes(rpl_dag_t *, rpl_parent_t *);

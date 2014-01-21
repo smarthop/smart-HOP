@@ -58,7 +58,7 @@ static void handle_dio_timer(void *ptr);
 
 static uint16_t next_dis;
 
-static uip_ipaddr_t *mobile_dio_addr; //smart-HOP added
+static uip_ipaddr_t *mobile_dio_addr; /* smart-HOP added */
 
 /* dio_send_ok is true if the node is ready to send DIOs */
 static uint8_t dio_send_ok;
@@ -75,7 +75,7 @@ handle_periodic_timer(void *ptr)
   next_dis++;
   if(rpl_get_any_dag() == NULL && next_dis >= RPL_DIS_INTERVAL) {
     next_dis = 0;
-    dis_output(NULL, 0, 0); //smart-HOP edited
+    dis_output(NULL, 0, 0); /* smart-HOP edited */
   }
 #endif
   ctimer_reset(&periodic_timer);
@@ -83,7 +83,7 @@ handle_periodic_timer(void *ptr)
 /************************************************************************/
 
 void
-new_dio_interval(rpl_instance_t * instance, uip_ipaddr_t * dio_addr,
+new_dio_interval(rpl_instance_t *instance, uip_ipaddr_t *dio_addr,
                  uint8_t flag, char priority)
 {
   uint32_t time, time2;
@@ -114,7 +114,7 @@ new_dio_interval(rpl_instance_t * instance, uip_ipaddr_t * dio_addr,
 
     /* random number between I/2 and I */
     ticks =
-      ticks / 2 + (ticks / 2 * (uint32_t) random_rand()) / RANDOM_RAND_MAX;
+      ticks / 2 + (ticks / 2 * (uint32_t)random_rand()) / RANDOM_RAND_MAX;
 
     /*
      * The intervals must be equally long among the nodes for Trickle to
@@ -153,24 +153,16 @@ handle_dio_timer(void *ptr)
 {
   rpl_instance_t *instance;
 
-  instance = (rpl_instance_t *) ptr;
+  instance = (rpl_instance_t *)ptr;
 
   PRINTF("RPL: DIO Timer triggered\n");
-/*
- * ###################
- * smart-HOP START
- * ###################
- */
+
   if(instance->dio_reset_flag == 1) {
     dio_output(instance, mobile_dio_addr, 2);
     instance->dio_reset_flag = 0;
     return;
   }
-/*
- * ###################
- * smart-HOP END
- * ###################
- */
+
   if(!dio_send_ok) {
     if(uip_ds6_get_link_local(ADDR_PREFERRED) != NULL) {
       dio_send_ok = 1;
@@ -189,7 +181,7 @@ handle_dio_timer(void *ptr)
 #if RPL_CONF_STATS
       instance->dio_totsend++;
 #endif /* RPL_CONF_STATS */
-      dio_output(instance, NULL, 0); //smart-HOP edited
+      dio_output(instance, NULL, 0); /* smart-HOP edited */
     } else {
       PRINTF("RPL: Supressing DIO transmission (%d >= %d)\n",
              instance->dio_counter, instance->dio_redundancy);
@@ -207,7 +199,7 @@ handle_dio_timer(void *ptr)
       PRINTF("RPL: DIO Timer interval doubled %d\n",
              instance->dio_intcurrent);
     }
-    new_dio_interval(instance, NULL, 0, 0); //smart-HOP edited
+    new_dio_interval(instance, NULL, 0, 0);
   }
 }
 /*---------------------------------------------------------------------------*/
@@ -215,7 +207,7 @@ void
 rpl_reset_periodic_timer(void)
 {
   next_dis = RPL_DIS_INTERVAL / 2 +
-    ((uint32_t) RPL_DIS_INTERVAL * (uint32_t) random_rand()) /
+    ((uint32_t)RPL_DIS_INTERVAL * (uint32_t)random_rand()) /
     RANDOM_RAND_MAX - RPL_DIS_START_DELAY;
   ctimer_set(&periodic_timer, CLOCK_SECOND, handle_periodic_timer, NULL);
 }
@@ -223,7 +215,7 @@ rpl_reset_periodic_timer(void)
 /* Resets the DIO timer in the instance to its minimal interval. */
 
 void
-rpl_reset_dio_timer(rpl_instance_t * instance)
+rpl_reset_dio_timer(rpl_instance_t *instance)
 {
 #if !RPL_LEAF_ONLY
   /* Do not reset if we are already on the minimum interval,
@@ -231,7 +223,7 @@ rpl_reset_dio_timer(rpl_instance_t * instance)
   if(instance->dio_intcurrent > instance->dio_intmin) {
     instance->dio_counter = 0;
     instance->dio_intcurrent = instance->dio_intmin;
-    new_dio_interval(instance, NULL, 0, 0); //smart-HOP edited
+    new_dio_interval(instance, NULL, 0, 0); /* smart-HOP edited */
   }
 #if RPL_CONF_STATS
   rpl_stats.resets++;
@@ -241,7 +233,7 @@ rpl_reset_dio_timer(rpl_instance_t * instance)
 /*---------------------------------------------------------------------------*/
 static void handle_dao_timer(void *ptr);
 static void
-set_dao_lifetime_timer(rpl_instance_t * instance)
+set_dao_lifetime_timer(rpl_instance_t *instance)
 {
   if(rpl_get_mode() == RPL_MODE_FEATHER) {
     return;
@@ -252,8 +244,8 @@ set_dao_lifetime_timer(rpl_instance_t * instance)
   if(instance->lifetime_unit != 0xffff && instance->default_lifetime != 0xff) {
     clock_time_t expiration_time;
 
-    expiration_time = (clock_time_t) instance->default_lifetime *
-      (clock_time_t) instance->lifetime_unit * CLOCK_SECOND / 2;
+    expiration_time = (clock_time_t)instance->default_lifetime *
+      (clock_time_t)instance->lifetime_unit * CLOCK_SECOND / 2;
     PRINTF("RPL: Scheduling DAO lifetime timer %u ticks in the future\n",
            (unsigned)expiration_time);
     ctimer_set(&instance->dao_lifetime_timer, expiration_time,
@@ -266,7 +258,7 @@ handle_dao_timer(void *ptr)
 {
   rpl_instance_t *instance;
 
-  instance = (rpl_instance_t *) ptr;
+  instance = (rpl_instance_t *)ptr;
 
   if(!dio_send_ok && uip_ds6_get_link_local(ADDR_PREFERRED) == NULL) {
     PRINTF("RPL: Postpone DAO transmission\n");
@@ -293,7 +285,7 @@ handle_dao_timer(void *ptr)
 }
 /*---------------------------------------------------------------------------*/
 static void
-schedule_dao(rpl_instance_t * instance, clock_time_t latency)
+schedule_dao(rpl_instance_t *instance, clock_time_t latency)
 {
   clock_time_t expiration_time;
 
@@ -321,19 +313,19 @@ schedule_dao(rpl_instance_t * instance, clock_time_t latency)
 }
 /*---------------------------------------------------------------------------*/
 void
-rpl_schedule_dao(rpl_instance_t * instance)
+rpl_schedule_dao(rpl_instance_t *instance)
 {
   schedule_dao(instance, RPL_DAO_LATENCY);
 }
 /*---------------------------------------------------------------------------*/
 void
-rpl_schedule_dao_immediately(rpl_instance_t * instance)
+rpl_schedule_dao_immediately(rpl_instance_t *instance)
 {
   schedule_dao(instance, 0);
 }
 /*---------------------------------------------------------------------------*/
 void
-rpl_cancel_dao(rpl_instance_t * instance)
+rpl_cancel_dao(rpl_instance_t *instance)
 {
   ctimer_stop(&instance->dao_timer);
   ctimer_stop(&instance->dao_lifetime_timer);

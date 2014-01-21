@@ -1,8 +1,6 @@
 The Contiki Operating System
 ============================
 
-[![Build Status](https://secure.travis-ci.org/contiki-os/contiki.png)](http://travis-ci.org/contiki-os/contiki)
-
 Contiki is an open source operating system that runs on tiny low-power
 microcontrollers and makes it possible to develop applications that
 make efficient use of the hardware while providing standardized
@@ -17,3 +15,8 @@ and so on.
 For more information, see the Contiki website:
 
 [http://contiki-os.org](http://contiki-os.org)
+
+============================
+
+smart-HOP implementation on Contiki.
+

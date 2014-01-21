@@ -52,10 +52,6 @@
 #define DEBUG DEBUG_PRINT
 #include "net/uip-debug.h"
 
-/*#ifndef PERIOD
-   #define PERIOD 1
- #endif*/
-
 #define SEND_INTERVAL   (CLOCK_SECOND / 30)
 #define SEND_TIME   0       /*(random_rand()%10)*((SEND_INTERVAL)/2) */
 #define MAX_PAYLOAD_LEN   30
@@ -71,8 +67,6 @@ AUTOSTART_PROCESSES(&udp_client_process);
 static void
 tcpip_handler(void)
 {
-  /*rpl_instance_t *instance = &instance_table[0];
-     rpl_dag_t *dag = instance->current_dag; */
   char *ptr;
   char *str;
 
@@ -82,7 +76,7 @@ tcpip_handler(void)
     str[uip_datalen()] = '\0';
     rrssi = strtol(str, &ptr, 10);
     packets = strtol(ptr, &ptr, 10);
-    /*PRINTF("rssi = %ld, packets = %ld\n", rrssi, packets);*/
+    PRINTF("rssi = %ld, packets = %ld\n", rrssi, packets);
     leds_off(LEDS_BLUE);
     if(rrssi <= RSSI_THRESHOLD && mobility_flag == 0
        && hand_off_backoff_flag == 0) {
@@ -100,14 +94,16 @@ send_packet(void *ptr)
   static int seq_id;
   char buf[MAX_PAYLOAD_LEN];
 
-  /*PRINTF("Mobility flag = %d\n",mobility_flag); */
   seq_id++;
-
   PRINTF("%d 'Hi %d'\n",
          server_ipaddr.u8[sizeof(server_ipaddr.u8) - 1], seq_id);
   sprintf(buf, "Hi %d", seq_id);
   uip_udp_packet_sendto(client_conn, buf, strlen(buf),
                         &server_ipaddr, UIP_HTONS(UDP_SERVER_PORT));
+  /*
+   * Every time we send a packet, we check if there was DATA received
+   * TODO: This must be changed into the core system.
+   */
   if(NO_DATA == 1 && mobility_flag == 0 && hand_off_backoff_flag == 0) {
     test_unreachable = 1;
     process_post(&unreach_process, PARENT_UNREACHABLE, NULL);

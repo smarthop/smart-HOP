@@ -66,108 +66,109 @@ rpl_dis_burst()
 void
 eventhandler(process_event_t ev, process_data_t data)
 {
-  switch (ev) {
+  switch(ev) {
 
   case PARENT_UNREACHABLE:
-    {
-      instance = &instance_table[0];
-      dag = instance->current_dag;
-      p = nbr_table_head(rpl_parents);
+  {
+    instance = &instance_table[0];
+    dag = instance->current_dag;
+    p = nbr_table_head(rpl_parents);
 
-      while(p != NULL) {
-        if(p == dag->preferred_parent) {
-          pref = rpl_get_parent_ipaddr(p);
-        }
-        p = nbr_table_next(rpl_parents, p);
+    while(p != NULL) {
+      if(p == dag->preferred_parent) {
+        pref = rpl_get_parent_ipaddr(p);
       }
-      if(test_unreachable == 1 && hand_off_backoff_flag == 0) {
-        printf("Connection unstable\n");
-        /*packetbuf_clear();
-           packetbuf_clear_hdr(); */
-        dis_output(pref, 1, 0);
-        reliable = 0;
-        if(wait_dio_flag == 0) {
-          etimer_set(&dio_check, WAIT_DIO);
-          wait_dio_flag++;
-        } else {
-          etimer_reset(&dio_check);
-        }
+      p = nbr_table_next(rpl_parents, p);
+    }
+    if(test_unreachable == 1 && hand_off_backoff_flag == 0) {
+      PRINTF("Connection unstable\n");
+      dis_output(pref, 1, 0);   /* Send DIS to assess parent */
+      reliable = 0;
+      if(wait_dio_flag == 0) {
+        /*
+         * Wait DIO reply. If parent doesn't reply until timer finishes,
+         * he's considered unreachable.
+         */
+        etimer_set(&dio_check, WAIT_DIO);
+        wait_dio_flag++;
+      } else {
+        etimer_reset(&dio_check);
       }
     }
-    break;
+  }
+  break;
 
   case PARENT_REACHABLE:
-    {
-      uint8_t *dis_rssi;
+  {
+    uint8_t *dis_rssi;
 
-      dis_rssi = data;
-      /*printf("dis_rssi = %d",dis_rssi); */
-      rssi = dis_rssi - 45;
-      if(dis_rssi > 200) {
-        rssi = dis_rssi - 255 - 46;
-      }
-      /*PRINTF("Received DIO with flag\n"); */
-      PRINTF("RSSI response from parent = %d ->", rssi);
-      if(rssi <= -85) {
-        PRINTF(" Unreliable\n");
-        mobility_flag = 1;
-        leds_on(LEDS_ALL);
-        current_t = clock_time() * 1000 / CLOCK_SECOND;
-        PRINTF("%u\n", current_t);
-        dis_output(NULL, 1, counter);
-        rpl_dis_burst();
-        /*rpl_remove_parent(dag,dag->preferred_parent); */
-      } else {
-        PRINTF(" Reliable\n");
-        reliable = 1;
-        process_post(&tcpip_process, RESET_MOBILITY_FLAG, NULL);
-      }
+    /* We received the DIO reply from parent but we need to check the RSSI value */
+    dis_rssi = data;
+    rssi = dis_rssi - 45;
+    if(dis_rssi > 200) {
+      rssi = dis_rssi - 255 - 46;
     }
-    break;
+    PRINTF("RSSI response from parent = %d ->", rssi);
+    if(rssi <= -85) {
+      PRINTF(" Unreliable\n");
+      mobility_flag = 1;
+      leds_on(LEDS_ALL);
+      current_t = clock_time() * 1000 / CLOCK_SECOND;
+      PRINTF("%u\n", current_t);
+      dis_output(NULL, 1, counter);
+      rpl_dis_burst();
+      /*rpl_remove_parent(dag,dag->preferred_parent); */
+    } else {
+      PRINTF(" Reliable\n");
+      reliable = 1;
+      process_post(&tcpip_process, RESET_MOBILITY_FLAG, NULL);
+    }
+  }
+  break;
 
   case DIS_BURST:
-    {
-      etimer_reset(&dis_timer);
-    }
-    break;
+  {
+    etimer_reset(&dis_timer);
+  }
+  break;
 
+  /* DIO received when checking current parent, stop the timer */
   case STOP_DIO_CHECK:
-    {
-      PRINTF("stoping wait_dio timer\n");
-      etimer_stop(&dio_check);
-    }
-    break;
+  {
+    PRINTF("Stopping wait_dio timer\n");
+    etimer_stop(&dio_check);
+  }
+  break;
 
   case PROCESS_EVENT_TIMER:
-    {
-      if(data == &dio_check && etimer_expired(&dio_check) && !reliable
-         && test_unreachable == 1) {
-        mobility_flag = 1;
-        if(dis_burst_flag == 0) {
-          dis_burst_flag++;
-          current_t = clock_time() * 1000 / CLOCK_SECOND;
-          printf("%u\n", current_t);
-          dis_output(NULL, 1, counter);
-          etimer_set(&dis_timer, SEND_TIME);
-        } else {
-          etimer_reset(&dis_timer);
-        }
-
-        /*process_post_synch(&unreach_process,DIS_BURST,NULL); */
-      }
-
-      if(data == &dis_timer && etimer_expired(&dis_timer)) {
-        counter++;
+  {
+/* Current parent Unreachable/Unreliable, print current time and start DIS_BURST */
+    if(data == &dio_check && etimer_expired(&dio_check) && !reliable
+       && test_unreachable == 1) {
+      mobility_flag = 1;
+      if(dis_burst_flag == 0) {
+        dis_burst_flag++;
+        current_t = clock_time() * 1000 / CLOCK_SECOND;
+        printf("%u\n", current_t);
         dis_output(NULL, 1, counter);
-        if(counter < 3) {
-          etimer_reset(&dis_timer);
-        } else {
-          counter = 1;
-          dis_burst_flag = 0;
-        }
+        etimer_set(&dis_timer, SEND_TIME);
+      } else {
+        etimer_reset(&dis_timer);
       }
     }
-    break;
+/* 1st DIS was sent above. Check for the backoff delay and keep sending (Total = 3DIS) */
+    if(data == &dis_timer && etimer_expired(&dis_timer)) {
+      counter++;
+      dis_output(NULL, 1, counter);
+      if(counter < 3) {
+        etimer_reset(&dis_timer);
+      } else {
+        counter = 1;
+        dis_burst_flag = 0;
+      }
+    }
+  }
+  break;
   }
 }
 PROCESS_THREAD(unreach_process, ev, data)
