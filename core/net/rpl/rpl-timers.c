@@ -81,11 +81,7 @@ handle_periodic_timer(void *ptr)
   ctimer_reset(&periodic_timer);
 }
 /************************************************************************/
-/*
- * ###################
- * smart-HOP START
- * ###################
- */
+
 void
 new_dio_interval(rpl_instance_t * instance, uip_ipaddr_t * dio_addr,
                  uint8_t flag, char priority)
@@ -102,15 +98,13 @@ new_dio_interval(rpl_instance_t * instance, uip_ipaddr_t * dio_addr,
      * Trickle will not be affected.
      */
     time2 = (priority * CLOCK_SECOND) / 30;
-    /*dio_output(instance, mobile_dio_addr, 2); */
+    /*
+     * TODO: - add random delay.
+     */
     PRINTF("RPL: Scheduling DIO timer %lu ticks in future\n", time2);
     ctimer_set(&instance->dio_timer, time2, &handle_dio_timer, instance);
   } else {
-/*
- * ###################
- * smart-HOP END
- * ###################
- */
+
     /* TODO: too small timer intervals for many cases */
     time = 1UL << instance->dio_intcurrent;
 
