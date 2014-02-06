@@ -23,7 +23,7 @@ BEGIN {
  builtin[""] = 	"";
 }
 
-/^[0123456789abcdef]+ [ABCDGRSTUVW] [^__]/ {
+/^[0123456789abcdef]+ [ABCDGRSTUVW] / {
   if ($3 != "symbols" && $3 != "symbols_nelts") {
     name[nname] = $3;
     nname++;

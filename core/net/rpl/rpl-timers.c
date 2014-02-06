@@ -97,11 +97,11 @@ new_dio_interval(rpl_instance_t *instance, uip_ipaddr_t *dio_addr,
      * The delay depends on the priority given to them according to the rssi reading.
      * Trickle will not be affected.
      */
-    time2 = (priority * CLOCK_SECOND) / 30;
+    time2 = 5 * random_rand() % 1000 * priority * CLOCK_SECOND / 1000;
     /*
      * TODO: - add random delay.
      */
-    PRINTF("RPL: Scheduling DIO timer %lu ticks in future\n", time2);
+    PRINTF("SH: Scheduling DIO timer %lu ticks in future\n", time2);
     ctimer_set(&instance->dio_timer, time2, &handle_dio_timer, instance);
   } else {
 

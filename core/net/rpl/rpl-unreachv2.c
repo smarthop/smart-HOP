@@ -19,7 +19,7 @@
 #include <string.h>
 #include "net/uip-debug.h"
 
-#define DEBUG DEBUG_NONE
+#define DEBUG DEBUG_PRINT
 #define SEND_TIME (CLOCK_SECOND / 50)
 #define WAIT_DIO (CLOCK_SECOND / 15)
 /* This timer is started after DIS is sent. If no DIO is received when timer reaches 0,
@@ -72,17 +72,17 @@ eventhandler(process_event_t ev, process_data_t data)
   {
     instance = &instance_table[0];
     dag = instance->current_dag;
-    p = nbr_table_head(rpl_parents);
-
-    while(p != NULL) {
-      if(p == dag->preferred_parent) {
-        pref = rpl_get_parent_ipaddr(p);
-      }
-      p = nbr_table_next(rpl_parents, p);
+    if(dag->preferred_parent != NULL) {
+    	p = dag->preferred_parent;
+    	PRINT6ADDR(rpl_get_parent_ipaddr(p));
+    } else {
+    	PRINTF("NULL");
     }
+    PRINTF("\n");
+
     if(test_unreachable == 1 && hand_off_backoff_flag == 0) {
       PRINTF("Connection unstable\n");
-      dis_output(pref, 1, 0);   /* Send DIS to assess parent */
+      dis_output(rpl_get_parent_ipaddr(p), 1, 0);   /* Send DIS to assess parent */
       reliable = 0;
       if(wait_dio_flag == 0) {
         /*
@@ -147,9 +147,11 @@ eventhandler(process_event_t ev, process_data_t data)
        && test_unreachable == 1) {
       mobility_flag = 1;
       if(dis_burst_flag == 0) {
+    	  rpl_nullify_parent(dag->preferred_parent);
+    	  /*rpl_remove_parent(dag->preferred_parent);*/
         dis_burst_flag++;
         current_t = clock_time() * 1000 / CLOCK_SECOND;
-        printf("%u\n", current_t);
+        PRINTF("%u\n", current_t); /* Print current time to measure hand-off */
         dis_output(NULL, 1, counter);
         etimer_set(&dis_timer, SEND_TIME);
       } else {

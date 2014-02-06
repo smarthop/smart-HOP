@@ -75,6 +75,7 @@ tcpip_handler(void)
            UIP_IP_BUF->srcipaddr.u8[sizeof(UIP_IP_BUF->srcipaddr.u8) - 1]);
     PRINTF("\n");
     if(rssi_packets == 3) {
+    	/*PRINTF("packets_received = %d\n", packets);*/
       sprintf(buf, "%d %u", rssi_rec / rssi_packets, packets);
       /*PRINTF("RSSI: %d, %d\n",rssi/rssi_packets, packets);*/
       uip_ipaddr_copy(&server_conn->ripaddr, &UIP_IP_BUF->srcipaddr);

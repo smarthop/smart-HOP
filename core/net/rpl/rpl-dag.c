@@ -1301,7 +1301,8 @@ rpl_process_dio(uip_ipaddr_t *from, rpl_dio_t *dio, int mobility)
    * schedule DAO and finish the mobility process.
    */
   if(mobility) {
-    instance->current_dag->preferred_parent = p;
+
+	rpl_set_preferred_parent(dag, p);
     rpl_set_default_route(instance, from);
     check_dao_ack = 1;
     rpl_schedule_dao(instance);

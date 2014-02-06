@@ -58,7 +58,8 @@
 #define UIP_IP_BUF   ((struct uip_ip_hdr *)&uip_buf[UIP_LLH_LEN])
 static struct uip_udp_conn *client_conn;
 static uip_ipaddr_t server_ipaddr;
-long int rrssi, packets;
+long int  packets/*, rrssi*/;
+static int rrssi, rrssi2;
 
 /*---------------------------------------------------------------------------*/
 PROCESS(udp_client_process, "UDP client process");
@@ -74,11 +75,14 @@ tcpip_handler(void)
     leds_on(LEDS_BLUE);
     str = uip_appdata;
     str[uip_datalen()] = '\0';
-    rrssi = strtol(str, &ptr, 10);
+    rrssi = strtol(str, &ptr, 10); /* RSSI sent by the root. This was being used in single HOP */
+    /* PRINTF("RRSSI = %d\n",rrssi); */
+    rrssi2 = packetbuf_attr(PACKETBUF_ATTR_RSSI) - 45;
+    PRINTF("RSSI = %d\n",rrssi2);
     packets = strtol(ptr, &ptr, 10);
-    PRINTF("rssi = %ld, packets = %ld\n", rrssi, packets);
+    /*PRINTF("rssi = %ld, packets = %ld\n", rrssi, packets);*/ /* previous print */
     leds_off(LEDS_BLUE);
-    if(rrssi <= RSSI_THRESHOLD && mobility_flag == 0
+    if(rrssi2 <= RSSI_THRESHOLD && mobility_flag == 0
        && hand_off_backoff_flag == 0) {
       rpl_unreach();
       test_unreachable = 1;
@@ -192,7 +196,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
   PRINT6ADDR(&client_conn->ripaddr);
   PRINTF(" local/remote port %u/%u\n",
          UIP_HTONS(client_conn->lport), UIP_HTONS(client_conn->rport));
-
+  /*rpl_set_mode(RPL_MODE_LEAF);*/
   etimer_set(&periodic, SEND_INTERVAL);
   while(1) {
     PROCESS_YIELD();

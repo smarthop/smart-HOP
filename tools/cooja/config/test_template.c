@@ -26,6 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * $Id: test_template.c,v 1.1 2009/02/20 16:59:52 fros4943 Exp $
  */
 
 #include <jni.h>
@@ -50,12 +51,12 @@ int uvar1;
 int uvar2;
 
 JNIEXPORT void JNICALL
-Java_org_contikios_cooja_corecomm_[CLASS_NAME]_init(JNIEnv *env, jobject obj)
+Java_se_sics_cooja_corecomm_[CLASS_NAME]_init(JNIEnv *env, jobject obj)
 {
  }
 /*---------------------------------------------------------------------------*/
 JNIEXPORT void JNICALL
-Java_org_contikios_cooja_corecomm_[CLASS_NAME]_getMemory(JNIEnv *env, jobject obj, jint rel_addr, jint length, jbyteArray mem_arr)
+Java_se_sics_cooja_corecomm_[CLASS_NAME]_getMemory(JNIEnv *env, jobject obj, jint rel_addr, jint length, jbyteArray mem_arr)
 {
   (*env)->SetByteArrayRegion(
       env,
@@ -68,7 +69,7 @@ Java_org_contikios_cooja_corecomm_[CLASS_NAME]_getMemory(JNIEnv *env, jobject ob
 }
 /*---------------------------------------------------------------------------*/
 JNIEXPORT void JNICALL
-Java_org_contikios_cooja_corecomm_[CLASS_NAME]_setMemory(JNIEnv *env, jobject obj, jint rel_addr, jint length, jbyteArray mem_arr)
+Java_se_sics_cooja_corecomm_[CLASS_NAME]_setMemory(JNIEnv *env, jobject obj, jint rel_addr, jint length, jbyteArray mem_arr)
 {
   jbyte *mem = (*env)->GetByteArrayElements(env, mem_arr, 0);
   memcpy(
@@ -79,14 +80,14 @@ Java_org_contikios_cooja_corecomm_[CLASS_NAME]_setMemory(JNIEnv *env, jobject ob
 }
 /*---------------------------------------------------------------------------*/
 JNIEXPORT void JNICALL
-Java_org_contikios_cooja_corecomm_[CLASS_NAME]_tick(JNIEnv *env, jobject obj)
+Java_se_sics_cooja_corecomm_[CLASS_NAME]_tick(JNIEnv *env, jobject obj)
 {
   ++var1;
   ++uvar1;
 }
 /*---------------------------------------------------------------------------*/
 JNIEXPORT void JNICALL
-Java_org_contikios_cooja_corecomm_[CLASS_NAME]_setReferenceAddress(JNIEnv *env, jobject obj, jint addr)
+Java_se_sics_cooja_corecomm_[CLASS_NAME]_setReferenceAddress(JNIEnv *env, jobject obj, jint addr)
 {
   referenceVar = (((long)&referenceVar) - ((long)addr));
 }

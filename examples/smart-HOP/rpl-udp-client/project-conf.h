@@ -11,3 +11,4 @@
 /*smart-HOP Configurations*/
 #define MOBILE_NODE 1
 #define RPL_CONF_LEAF_ONLY 1
+#define CC2420_CONF_AUTOACK 0

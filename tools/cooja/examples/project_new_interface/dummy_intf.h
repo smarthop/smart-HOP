@@ -26,14 +26,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * $Id: dummy_intf.h,v 1.1 2007/03/23 23:33:54 fros4943 Exp $
  */
 
-#ifndef DUMMY_INTF_H_
-#define DUMMY_INTF_H_
+#ifndef __DUMMY_INTF_H__
+#define __DUMMY_INTF_H__
 
 // Interface needs to include something?
 
 #define DUMMY_NR_1 1
 #define DUMMY_NR_2 2
 
-#endif /* DUMMY_INTF_H_ */
+#endif /* __DUMMY_INTF_H__ */

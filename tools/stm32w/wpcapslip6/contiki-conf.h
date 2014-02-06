@@ -1,5 +1,5 @@
-#ifndef CONTIKI_CONF_H_
-#define CONTIKI_CONF_H_
+#ifndef __CONTIKI_CONF_H__
+#define __CONTIKI_CONF_H__
 #include <stdint.h>
 #define CCIF
 #define CLIF
@@ -17,4 +17,4 @@ typedef unsigned short uip_stats_t;
 typedef unsigned long clock_time_t;
 #define CLOCK_CONF_SECOND 1000
 
-#endif /* CONTIKI_CONF_H_ */
+#endif /* __CONTIKI_CONF_H__ */

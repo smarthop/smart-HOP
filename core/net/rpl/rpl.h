@@ -252,7 +252,7 @@ void rpl_dag_init(void);
  * RPL modes
  *
  * The RPL module can be in either of three modes: mesh mode
- * (RPL_MODE_MESH), feater mode (RPL_MODE_FEATHER), and leaf mode
+ * (RPL_MODE_MESH), feather mode (RPL_MODE_FEATHER), and leaf mode
  * (RPL_MODE_LEAF). In mesh mode, nodes forward data for other nodes,
  * and are reachable by others. In feather mode, nodes can forward
  * data for other nodes, but are not reachable themselves. In leaf

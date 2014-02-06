@@ -26,6 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * $Id: DummyInterface.java,v 1.5 2010/12/02 15:27:27 fros4943 Exp $
  */
 
 import java.util.*;
@@ -33,10 +34,10 @@ import javax.swing.*;
 import org.apache.log4j.Logger;
 import org.jdom.Element;
 
-import org.contikios.cooja.*;
-import org.contikios.cooja.contikimote.ContikiMoteInterface;
-import org.contikios.cooja.interfaces.PolledAfterAllTicks;
-import org.contikios.cooja.interfaces.PolledBeforeAllTicks;
+import se.sics.cooja.*;
+import se.sics.cooja.contikimote.ContikiMoteInterface;
+import se.sics.cooja.interfaces.PolledAfterAllTicks;
+import se.sics.cooja.interfaces.PolledBeforeAllTicks;
 
 /**
  * An example of how to implement new mote interfaces.

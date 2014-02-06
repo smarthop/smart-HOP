@@ -74,7 +74,7 @@ rpl_set_mode(enum rpl_mode m)
      switching to. */
   if(m == RPL_MODE_MESH) {
 
-    /* If we switcht to mesh mode, we should send out a DAO message to
+    /* If we switch to mesh mode, we should send out a DAO message to
        inform our parent that we now are reachable. Before we do this,
        we must set the mode variable, since DAOs will not be send if
        we are in feather mode. */

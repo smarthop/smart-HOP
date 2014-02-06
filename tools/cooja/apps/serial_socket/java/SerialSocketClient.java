@@ -26,6 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * $Id: SerialSocketClient.java,v 1.1 2010/01/27 14:28:26 fros4943 Exp $
  */
 
 import java.awt.BorderLayout;
@@ -48,14 +49,14 @@ import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 import org.jdom.Element;
 
-import org.contikios.cooja.ClassDescription;
-import org.contikios.cooja.Cooja;
-import org.contikios.cooja.Mote;
-import org.contikios.cooja.MotePlugin;
-import org.contikios.cooja.PluginType;
-import org.contikios.cooja.Simulation;
-import org.contikios.cooja.VisPlugin;
-import org.contikios.cooja.interfaces.SerialPort;
+import se.sics.cooja.ClassDescription;
+import se.sics.cooja.GUI;
+import se.sics.cooja.Mote;
+import se.sics.cooja.MotePlugin;
+import se.sics.cooja.PluginType;
+import se.sics.cooja.Simulation;
+import se.sics.cooja.VisPlugin;
+import se.sics.cooja.interfaces.SerialPort;
 
 /**
  * Socket to simulated serial port forwarder. Client version.
@@ -86,12 +87,12 @@ public class SerialSocketClient extends VisPlugin implements MotePlugin {
 
   private Mote mote;
 
-  public SerialSocketClient(Mote mote, Simulation simulation, final Cooja gui) {
+  public SerialSocketClient(Mote mote, Simulation simulation, final GUI gui) {
     super("Serial Socket (CLIENT) (" + mote + ")", gui, false);
     this.mote = mote;
 
     /* GUI components */
-    if (Cooja.isVisualized()) {
+    if (GUI.isVisualized()) {
       Box northBox = Box.createHorizontalBox();
       northBox.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
       statusLabel = configureLabel(northBox, "", "");
@@ -134,7 +135,7 @@ public class SerialSocketClient extends VisPlugin implements MotePlugin {
           out.write(serialPort.getLastSerialData());
           out.flush();
           outBytes++;
-          if (Cooja.isVisualized()) {
+          if (GUI.isVisualized()) {
             outLabel.setText(outBytes + " bytes");
           }
         } catch (IOException e) {
@@ -165,7 +166,7 @@ public class SerialSocketClient extends VisPlugin implements MotePlugin {
               serialPort.writeByte(data[i]);
             }
             inBytes += numRead;
-            if (Cooja.isVisualized()) {
+            if (GUI.isVisualized()) {
               inLabel.setText(inBytes + " bytes");
             }
           } else {

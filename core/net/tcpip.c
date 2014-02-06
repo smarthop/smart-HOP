@@ -226,7 +226,7 @@ packet_input(void)
 	 */
 #if MOBILE_NODE
   etimer_set(&unreach, NO_DATA_PERIOD);
-  packet_rssi = packetbuf_attr(PACKETBUF_ATTR_RSSI) - 45;
+  /*packet_rssi = packetbuf_attr(PACKETBUF_ATTR_RSSI) - 45;*/
 #endif
 
 #if UIP_CONF_IP_FORWARD
@@ -582,7 +582,7 @@ eventhandler(process_event_t ev, process_data_t data)
 
   case RESET_MOBILITY_FLAG:
     end_time = clock_time() * 1000 / CLOCK_SECOND;
-    printf("%u\n", end_time);
+    PRINTF("%u\n", end_time);
     hand_off_backoff_flag = 1;
     mobility_flag = 0;
     etimer_reset(&unreach);
@@ -676,7 +676,7 @@ tcpip_ipv6_output(void)
         if(nexthop == NULL) {
 #if UIP_CONF_IPV6_RPL
           /* If we are running RPL, and if we are the root of the
-             network, we'll trigger a global repair berfore we remove
+             network, we'll trigger a global repair before we remove
              the route. */
           rpl_dag_t *dag;
           rpl_instance_t *instance;
