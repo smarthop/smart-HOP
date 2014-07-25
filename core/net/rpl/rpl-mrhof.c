@@ -46,9 +46,17 @@
 
 #include "net/rpl/rpl-private.h"
 #include "net/nbr-table.h"
+#include "net/rpl/rpl.h"
+#include "net/tcpip.h"
 
 #define DEBUG DEBUG_NONE
 #include "net/uip-debug.h"
+
+#define NO_DATA_PERIOD (CLOCK_SECOND*9/2)
+
+static struct ctimer no_data_timer;
+static int timer_started;
+static int bad_etx_flag;
 
 static void reset(rpl_dag_t *);
 static void neighbor_link_callback(rpl_parent_t *, int, int);
@@ -106,6 +114,17 @@ reset(rpl_dag_t *sag)
 {
   PRINTF("RPL: Reset MRHOF\n");
 }
+void post_parent_unreachable(void)
+{
+	if(bad_etx_flag == 1 && NO_DATA == 0){
+		PRINTF("NO DATA DETECTED\n");
+		rpl_unreach();
+		test_unreachable = 1;
+		NO_DATA = 1;
+		timer_started = 0;
+		process_post(&unreach_process, PARENT_UNREACHABLE, NULL);
+	}
+}
 static void
 neighbor_link_callback(rpl_parent_t *p, int status, int numtx)
 {
@@ -127,8 +146,34 @@ neighbor_link_callback(rpl_parent_t *p, int status, int numtx)
            (unsigned)(new_etx / RPL_DAG_MC_ETX_DIVISOR),
            (unsigned)(packet_etx / RPL_DAG_MC_ETX_DIVISOR));
     p->link_metric = new_etx;
+	/*
+	 *  Unreachability detection timer.
+	 *  If there's no DATA input for NO_DATA_PERIOD, check current parent.
+	 */
+    if(packet_etx / RPL_DAG_MC_ETX_DIVISOR == 10){
+    	bad_etx_flag = 1;
+    	if(timer_started == 0)
+    	{
+    		PRINTF("bad etx\n");
+    		ctimer_set(&no_data_timer, NO_DATA_PERIOD, post_parent_unreachable, NULL);
+    		timer_started = 1;
+    	}
+    }
+    if(packet_etx / RPL_DAG_MC_ETX_DIVISOR == 1)
+    {
+    	bad_etx_flag = 0;
+    	if(timer_started == 1)
+    	{
+    	ctimer_stop(&no_data_timer);
+    	timer_started = 0;
+    	process_post_synch(&wait_dios, STOP_DIOS_INPUT, NULL);
+    	/*process_post(&unreach_process, STOP_DIO_CHECK, NULL);*/
+    	PRINTF("good ETX..stopping timer\n");
+    	}
   }
-}
+
+    }
+  }
 static rpl_rank_t
 calculate_rank(rpl_parent_t *p, rpl_rank_t base_rank)
 {

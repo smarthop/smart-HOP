@@ -1168,8 +1168,10 @@ rpl_process_dio(uip_ipaddr_t *from, rpl_dio_t *dio, int mobility)
 {
   rpl_instance_t *instance;
   rpl_dag_t *dag, *previous_dag;
-  rpl_parent_t *p;
+  rpl_parent_t *p, *previous_preferred;
+  uint32_t current_t;
 
+  PRINTF("processing DIO from %u\n", from->u8[15]);
   if(dio->mop != RPL_MOP_DEFAULT) {
     PRINTF("RPL: Ignoring a DIO with an unsupported MOP: %d\n", dio->mop);
     return;
@@ -1177,6 +1179,7 @@ rpl_process_dio(uip_ipaddr_t *from, rpl_dio_t *dio, int mobility)
 
   dag = get_dag(dio->instance_id, &dio->dag_id);
   instance = rpl_get_instance(dio->instance_id);
+  previous_preferred = dag->preferred_parent;
 
   if(dag != NULL && instance != NULL) {
     if(lollipop_greater_than(dio->version, dag->version)) {
@@ -1301,11 +1304,18 @@ rpl_process_dio(uip_ipaddr_t *from, rpl_dio_t *dio, int mobility)
    * schedule DAO and finish the mobility process.
    */
   if(mobility) {
-
-	rpl_set_preferred_parent(dag, p);
+    rpl_remove_parent(previous_preferred);
+    rpl_set_preferred_parent(dag, p);
+    RPL_LOLLIPOP_INCREMENT(instance->dtsn_out);
+    /*dao_output(p, 255);*/
+    /* We received a new DIO from our preferred parent.
+     * Call uip_ds6_defrt_add to set a fresh value for the lifetime counter */
+    PRINTF("adding default route\n");
+	current_t = clock_time() * 1000 / CLOCK_SECOND;
+	 printf("End %u\n", current_t);
     rpl_set_default_route(instance, from);
-    check_dao_ack = 1;
     rpl_schedule_dao(instance);
+    /*check_dao_ack = 1;*/
     process_post(&tcpip_process, RESET_MOBILITY_FLAG, NULL);
     return;
   }

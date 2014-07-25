@@ -9,7 +9,7 @@
   <project EXPORT="discard">[CONTIKI_DIR]/tools/cooja/apps/mobility</project>
   <simulation>
     <title>My simulation</title>
-    <speedlimit>10.0</speedlimit>
+    <speedlimit>1.0</speedlimit>
     <randomseed>123456</randomseed>
     <motedelay_us>1000000</motedelay_us>
     <radiomedium>
@@ -72,7 +72,7 @@
       <breakpoints />
       <interface_config>
         se.sics.cooja.interfaces.Position
-        <x>14.0</x>
+        <x>9.0</x>
         <y>3.0</y>
         <z>0.0</z>
       </interface_config>
@@ -156,7 +156,7 @@
   <plugin>
     se.sics.cooja.plugins.SimControl
     <width>280</width>
-    <z>1</z>
+    <z>0</z>
     <height>160</height>
     <location_x>400</location_x>
     <location_y>0</location_y>
@@ -171,7 +171,7 @@
       <viewport>10.477928837063184 0.0 0.0 10.477928837063184 36.23001425409164 121.92611501243327</viewport>
     </plugin_config>
     <width>400</width>
-    <z>2</z>
+    <z>1</z>
     <height>400</height>
     <location_x>1</location_x>
     <location_y>1</location_y>
@@ -182,7 +182,7 @@
       <filter />
     </plugin_config>
     <width>1015</width>
-    <z>3</z>
+    <z>2</z>
     <height>671</height>
     <location_x>400</location_x>
     <location_y>160</location_y>
@@ -203,7 +203,7 @@
       <zoomfactor>500.0</zoomfactor>
     </plugin_config>
     <width>1415</width>
-    <z>6</z>
+    <z>5</z>
     <height>166</height>
     <location_x>0</location_x>
     <location_y>837</location_y>
@@ -215,7 +215,7 @@
       <decorations>true</decorations>
     </plugin_config>
     <width>735</width>
-    <z>5</z>
+    <z>4</z>
     <height>160</height>
     <location_x>680</location_x>
     <location_y>0</location_y>
@@ -226,22 +226,10 @@
       <positions EXPORT="copy">[CONTIKI_DIR]/examples/smart-HOP/1MN_5Servers position_file</positions>
     </plugin_config>
     <width>500</width>
-    <z>4</z>
+    <z>3</z>
     <height>200</height>
     <location_x>26</location_x>
     <location_y>559</location_y>
-  </plugin>
-  <plugin>
-    se.sics.cooja.plugins.RadioLogger
-    <plugin_config>
-      <split>150</split>
-      <analyzers name="6lowpan-pcap" />
-    </plugin_config>
-    <width>500</width>
-    <z>0</z>
-    <height>300</height>
-    <location_x>13</location_x>
-    <location_y>461</location_y>
   </plugin>
 </simconf>
 

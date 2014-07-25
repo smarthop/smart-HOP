@@ -39,8 +39,13 @@
  */
 
 #include "contiki-net.h"
+#include "sys/ctimer.h"
+#include "lib/random.h"
 #include "net/uip-split.h"
 #include "net/uip-packetqueue.h"
+#include "net/packetbuf.h"
+#include "dev/cc2420.h"
+#include "dev/cc2420_const.h"
 #if UIP_CONF_IPV6
 #include "net/uip-nd6.h"
 #include "net/uip-ds6.h"
@@ -85,19 +90,12 @@ process_event_t tcpip_icmp6_event;
 /* Periodic check of active connections. */
 static struct etimer periodic;
 
-/* unreach:
- * This timer is restarted once a packet is received. If timer expires, means no DATA input was detected.
- */
-static struct etimer unreach;
 static struct ctimer backoff_timer;
-#define HAND_OFF_BACKOFF CLOCK_SECOND / 2
-uint32_t end_time;
+static struct ctimer reset_input;
 
-/* Specify here the amount of time you want to wait until it's detected that no packets are being received
- * For example: if i'm sending packets every 10ms, i want this timer to be 30-50 ms.
- * This depends on the application or the user requirements. Adjust this value to your needs.
- */
-#define NO_DATA_PERIOD (CLOCK_SECOND / 2)
+#define WINDOW_SIZE_DATA_RATE (CLOCK_SECOND*5)*5
+#define HAND_OFF_BACKOFF CLOCK_SECOND / 50
+uint32_t end_time;
 
 /* Even if no packets are received. Last RSSI reading must be above this threshold in order
  * for the mobility process to be triggered.
@@ -108,10 +106,20 @@ uint32_t end_time;
  * and even if we receive packets, the unreach timer should not be reseted to avoid multiple/faulty "No packet" detections!
  * DIS/DIO reception also trigger the packet_input() thus the usage of this flag to avoid conflicts within mobility.
  */
-char mobility_flag = 0, unreach_flag = 0, NO_DATA = 0, test_unreachable = 0, hand_off_backoff_flag = 0;
+
+#define NUMBER_OF_MOBILE_NODES 2
+#define WINDOW_SIZE 3
+
+char mobility_flag = 0, NO_DATA = 0, test_unreachable = 0, hand_off_backoff_flag = 0;
 static int packet_rssi;
 rpl_dag_t *dag;
 rpl_instance_t *instance;
+
+int number_of_childs;
+int tcp_rssi = 0;
+int packet_input_count = 0;
+int rssi_sum;
+uint8_t mobile_nodes[NUMBER_OF_MOBILE_NODES];
 
 #if UIP_CONF_IPV6 && UIP_CONF_IPV6_REASSEMBLY
 /* Timer for reassembly. */
@@ -205,28 +213,84 @@ check_for_tcp_syn(void)
 #endif /* UIP_TCP || UIP_CONF_IP_FORWARD */
 }
 /*---------------------------------------------------------------------------*/
-
 void
 hand_off_backoff(void)
 {
   leds_off(LEDS_RED);
   leds_on(LEDS_GREEN);
-  etimer_set(&unreach, NO_DATA_PERIOD);
   hand_off_backoff_flag = 0;
   NO_DATA = 0;
+}
+/*---------------------------------------------------------------------------*/
+
+#if FORWARDER
+static void
+define_mobile_nodes(void)
+{
+  mobile_nodes[0] = 1;
+  /*mobile_nodes[1] = 2;*/
+}
+/*---------------------------------------------------------------------------*/
+int
+is_mobile_node(uint8_t addr)
+{
+  int i;
+  int is_mobile_node_flag = 0;
+  for(i = 0; i < NUMBER_OF_MOBILE_NODES; i++) {
+    if(mobile_nodes[i] == addr) {
+      is_mobile_node_flag = 1;
+      return is_mobile_node_flag;
+    } else {
+      is_mobile_node_flag = 0;
+    }
+  }
+  return is_mobile_node_flag;
+}
+/*---------------------------------------------------------------------------*/
+#endif
+void reset_packet_input(void)
+{
+	PRINTF("resetting count\n");
+	packet_input_count = 0;
+	rssi_sum = 0;
 }
 /*---------------------------------------------------------------------------*/
 static void
 packet_input(void)
 {
+#if FORWARDER
+	rpl_instance_t *instance;
+	uint8_t octet;
+	uint8_t ip6id;
+	int rssi_temp;
+	uint8_t send_rssi;
+	rimeaddr_t packet_from_addr;
 
-	/*
-	 *  Unreachability detection timer.
-	 *  If there's no DATA input for NO_DATA_PERIOD, check current parent.
-	 */
-#if MOBILE_NODE
-  etimer_set(&unreach, NO_DATA_PERIOD);
-  /*packet_rssi = packetbuf_attr(PACKETBUF_ATTR_RSSI) - 45;*/
+	packet_from_addr = *packetbuf_addr(PACKETBUF_ADDR_SENDER);
+	instance = &instance_table[0];
+	octet = packet_from_addr.u8[7];
+	ip6id = (octet & 0b00111111) << 2;
+	tcp_rssi = packetbuf_attr(PACKETBUF_ATTR_RSSI);
+  if(is_mobile_node(octet) == 1) {
+    packet_input_count++;
+    rssi_temp = tcp_rssi - 45;
+    if(tcp_rssi > 200) {
+      rssi_temp = tcp_rssi - 255 - 46;
+    }
+    rssi_sum += rssi_temp;
+
+    if(packet_input_count == WINDOW_SIZE) {
+      rssi_sum = rssi_sum / WINDOW_SIZE;
+      PRINTF("RSSI = %d\n", rssi_sum);
+      PRINTF("packet input count = %d\n", packet_input_count);
+      if(rssi_sum <= -90) {
+        send_rssi = rssi_sum + 255 + 46;
+        dis_output(NULL, 1, 0, send_rssi, ip6id);
+      }
+      rssi_sum = 0;
+      packet_input_count = 0;
+    }
+  }
 #endif
 
 #if UIP_CONF_IP_FORWARD
@@ -496,17 +560,6 @@ eventhandler(process_event_t ev, process_data_t data)
 #endif /* UIP_CONF_IP_FORWARD */
     }
 
-    /*Unreachability detection timer*/
-#if MOBILE_NODE
-    if((data == &unreach) && (etimer_expired(&unreach)) && mobility_flag == 0 && hand_off_backoff_flag == 0) {
-      NO_DATA = 1;
-      if(unreach_flag == 0) {
-        rpl_unreach();
-        unreach_flag++;
-      }
-    }
-#endif
-
 
 #if UIP_CONF_IPV6
 #if UIP_CONF_IPV6_REASSEMBLY
@@ -581,17 +634,15 @@ eventhandler(process_event_t ev, process_data_t data)
     break;
 
   case RESET_MOBILITY_FLAG:
-    end_time = clock_time() * 1000 / CLOCK_SECOND;
-    PRINTF("%u\n", end_time);
     hand_off_backoff_flag = 1;
     mobility_flag = 0;
-    etimer_reset(&unreach);
+    /*etimer_reset(&unreach);*/
     NO_DATA = 0;
-    ctimer_set(&backoff_timer, HAND_OFF_BACKOFF, hand_off_backoff, NULL);
     test_unreachable = 0;
     leds_off(LEDS_ALL);
     leds_on(LEDS_RED);
-    etimer_reset(&unreach);
+    /*etimer_reset(&unreach);*/
+    ctimer_set(&backoff_timer, HAND_OFF_BACKOFF, hand_off_backoff, NULL);
     break;
   }
 }
@@ -883,7 +934,7 @@ PROCESS_THREAD(tcpip_process, ev, data)
   tcpip_icmp6_event = process_alloc_event();
 #endif /* UIP_CONF_ICMP6 */
   etimer_set(&periodic, CLOCK_SECOND);
-
+ctimer_set(&reset_input,WINDOW_SIZE_DATA_RATE, reset_packet_input, 0);
   uip_init();
 #ifdef UIP_FALLBACK_INTERFACE
   UIP_FALLBACK_INTERFACE.init();
@@ -892,6 +943,10 @@ PROCESS_THREAD(tcpip_process, ev, data)
 #if UIP_CONF_IPV6 && UIP_CONF_IPV6_RPL
   rpl_init();
 #endif /* UIP_CONF_IPV6_RPL */
+
+#if FORWARDER
+  define_mobile_nodes();
+#endif
 
   while(1) {
     PROCESS_YIELD();

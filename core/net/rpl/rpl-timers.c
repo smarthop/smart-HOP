@@ -75,7 +75,7 @@ handle_periodic_timer(void *ptr)
   next_dis++;
   if(rpl_get_any_dag() == NULL && next_dis >= RPL_DIS_INTERVAL) {
     next_dis = 0;
-    dis_output(NULL, 0, 0); /* smart-HOP edited */
+    dis_output(NULL, 0, 0, 0, 0); /* smart-HOP edited */
   }
 #endif
   ctimer_reset(&periodic_timer);

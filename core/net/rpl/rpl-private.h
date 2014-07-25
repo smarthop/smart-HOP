@@ -86,6 +86,7 @@
 #define RPL_OPTION_SOLICITED_INFO        7
 #define RPL_OPTION_PREFIX_INFO           8
 #define RPL_OPTION_TARGET_DESC           9
+#define RPL_OPTION_SMART_HOP			10
 
 #define RPL_DAO_K_FLAG                   0x80   /* DAO ACK requested */
 #define RPL_DAO_D_FLAG                   0x40   /* DODAG ID present */
@@ -269,6 +270,8 @@ extern rpl_stats_t rpl_stats;
 CCIF extern process_event_t unreach_event;
 
 PROCESS_NAME(unreach_process);
+PROCESS_NAME(wait_dios);
+CCIF extern process_event_t wait_dios_event;
 extern enum {
   PARENT_UNREACHABLE,
   PARENT_REACHABLE,
@@ -276,18 +279,22 @@ extern enum {
   STOP_DIO_CHECK,
   SET_DIS_DELAY,
   SET_DIOS_INPUT,
-  RESET_DIOS_INPUT
+  RESET_DIOS_INPUT,
+  STOP_DIOS_INPUT
 };
+int unreach_flag;
 void rpl_unreach();
 void rpl_dis_burst();
 void rpl_reachable(uint8_t dis_rssi);
+void start_no_data_timer(void);
+void stop_no_data_timer(void);
 
 /* Instances */
 extern rpl_instance_t instance_table[];
 extern rpl_instance_t *default_instance;
 
 /* ICMPv6 functions for RPL. */
-void dis_output(uip_ipaddr_t * addr, uint8_t flags, uint8_t counter);
+void dis_output(uip_ipaddr_t *addr, uint8_t flags, uint8_t counter, uint8_t rssi, uint8_t ip6id);
 void dio_output(rpl_instance_t *, uip_ipaddr_t * uc_addr, uint8_t flags);
 void dao_output(rpl_parent_t *, uint8_t lifetime);
 void dao_output_target(rpl_parent_t *, uip_ipaddr_t *, uint8_t lifetime);
