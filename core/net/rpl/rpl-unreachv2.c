@@ -19,7 +19,7 @@
 #include <string.h>
 #include "net/uip-debug.h"
 
-#define DEBUG DEBUG_PRINT
+#define DEBUG DEBUG_NONE
 #define SEND_TIME (CLOCK_SECOND / 50)
 #define WAIT_DIO (CLOCK_SECOND / 15)
 

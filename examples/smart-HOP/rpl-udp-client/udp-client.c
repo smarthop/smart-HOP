@@ -49,7 +49,7 @@
 #define UDP_EXAMPLE_ID  190
 #define RSSI_THRESHOLD -90
 
-#define DEBUG DEBUG_PRINT
+#define DEBUG DEBUG_NONE
 #include "net/uip-debug.h"
 
 #define SEND_INTERVAL   (CLOCK_SECOND / 30)
